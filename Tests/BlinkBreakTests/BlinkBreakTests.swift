@@ -223,6 +223,24 @@ struct BlinkBreakTests {
         #expect(manager.timeUntilBlink == initialBlinkTime - 1)
     }
 
+    @Test("Display sleep freezes all countdown timers")
+    func displaySleepFreezesTimers() {
+        let manager = BreakManager.shared
+        manager.resetTimers()
+
+        let initialBreakTime = manager.timeUntilBreak
+        let initialBlinkTime = manager.timeUntilBlink
+
+        // Inject mock detector indicating display is asleep
+        manager.detector = MockVideoDetector(isVideoPlaying: false, isDisplayOn: false, playingProcessName: nil)
+
+        manager.tick()
+
+        // Timers must remain frozen when display is off
+        #expect(manager.timeUntilBreak == initialBreakTime)
+        #expect(manager.timeUntilBlink == initialBlinkTime)
+    }
+
     @Test("Live VideoPlaybackDetector runs without errors")
     func liveVideoDetectorRuns() {
         let detector = VideoPlaybackDetector.shared

@@ -53,14 +53,14 @@ public final class BreakManager: ObservableObject {
 
     public func startTimer() {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.tick()
             }
         }
-        if let t = timer {
-            RunLoop.main.add(t, forMode: .common)
-        }
+        t.tolerance = 0.1
+        RunLoop.main.add(t, forMode: .common)
+        self.timer = t
     }
 
     public func stopTimer() {
@@ -75,8 +75,14 @@ public final class BreakManager: ObservableObject {
             return
         }
 
-        // Check video playback status
+        // Check video playback status and display state
         let status = detector.checkStatus()
+        guard status.isDisplayOn else {
+            // Display is sleeping (e.g. lid closed, lock screen) - freeze timers
+            onTick?()
+            return
+        }
+
         self.isVideoPlaying = status.isVideoPlaying
         self.videoProcessName = status.playingProcessName
         self.isBreakPausedDueToVideo = status.isVideoPlaying && settings.pauseBreaksDuringVideo

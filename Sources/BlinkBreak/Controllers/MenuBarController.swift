@@ -6,6 +6,7 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
 
     private var statusItem: NSStatusItem?
     private let menu = NSMenu()
+    private var isMenuOpen = false
 
     private var nextBreakMenuItem: NSMenuItem!
     private var nextBlinkMenuItem: NSMenuItem!
@@ -48,7 +49,8 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
         }
 
         manager.onTick = { [weak self] in
-            self?.updateMenuTitles()
+            guard let self = self, self.isMenuOpen else { return }
+            self.updateMenuTitles()
         }
     }
 
@@ -130,7 +132,12 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
     }
 
     public func menuWillOpen(_ menu: NSMenu) {
+        isMenuOpen = true
         updateMenuTitles()
+    }
+
+    public func menuDidClose(_ menu: NSMenu) {
+        isMenuOpen = false
     }
 
     private func updateMenuTitles() {
