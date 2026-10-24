@@ -8,6 +8,7 @@ public final class BlinkToastState: ObservableObject {
     @Published public var totalSeconds: Double = 5.0
     @Published public var isEyeClosed: Bool = false
     @Published public var isVisible: Bool = false
+    @Published public var glowIntensity: Double = 0.5
 
     private var countdownTask: Task<Void, Never>?
 
@@ -18,6 +19,7 @@ public final class BlinkToastState: ObservableObject {
         totalSeconds = duration
         isEyeClosed = false
         isVisible = true
+        glowIntensity = 0.5
 
         countdownTask?.cancel()
         countdownTask = Task { @MainActor [weak self] in
@@ -34,6 +36,10 @@ public final class BlinkToastState: ObservableObject {
                 // Organic blinking rhythm: closes for ~200ms every 0.9s
                 let cycleTime = elapsed.truncatingRemainder(dividingBy: 0.9)
                 self.isEyeClosed = (cycleTime < 0.22)
+
+                // Smooth sinusoidal breathing aura (normalized 0.0 ... 1.0)
+                let wave = sin((elapsed / 1.6) * .pi * 2.0)
+                self.glowIntensity = (wave + 1.0) / 2.0
             }
 
             guard let self = self, !Task.isCancelled else { return }
@@ -52,6 +58,7 @@ public final class BlinkToastState: ObservableObject {
 
 public struct BlinkToastView: View {
     @ObservedObject var state = BlinkToastState.shared
+    @ObservedObject var settings = AppSettings.shared
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     var onDismiss: () -> Void
@@ -69,13 +76,20 @@ public struct BlinkToastView: View {
         return state.remainingSeconds / state.totalSeconds
     }
 
+    private var effectiveGlow: Double {
+        if reduceMotion || !settings.ambientGlowEnabled {
+            return 0.5
+        }
+        return state.glowIntensity
+    }
+
     public var body: some View {
         ZStack(alignment: .center) {
             HStack(spacing: 11) {
                 // Animated Eye Glyph
                 ZStack {
                     Circle()
-                        .fill(Color.cyan.opacity(isLight ? 0.16 : 0.22))
+                        .fill(Color.cyan.opacity(isLight ? 0.16 : 0.24))
                         .frame(width: 28, height: 28)
 
                     Image(systemName: "eye.fill")
@@ -134,21 +148,44 @@ public struct BlinkToastView: View {
             .frame(height: 40)
             .background(
                 Capsule()
-                    .fill(isLight ? Color.white.opacity(0.92) : Color(red: 0.11, green: 0.12, blue: 0.14).opacity(0.95))
+                    .fill(isLight ? Color.white.opacity(0.95) : Color(red: 0.11, green: 0.12, blue: 0.15).opacity(0.96))
                     .overlay(
                         Capsule()
                             .stroke(
-                                isLight
-                                    ? LinearGradient(colors: [Color.black.opacity(0.12), Color.black.opacity(0.04)], startPoint: .top, endPoint: .bottom)
-                                    : LinearGradient(colors: [Color.white.opacity(0.28), Color.white.opacity(0.08)], startPoint: .top, endPoint: .bottom),
-                                lineWidth: 1
+                                settings.ambientGlowEnabled
+                                    ? (isLight
+                                        ? LinearGradient(colors: [Color.cyan.opacity(0.50), Color.cyan.opacity(0.20)], startPoint: .top, endPoint: .bottom)
+                                        : LinearGradient(colors: [Color.cyan.opacity(0.75), Color.cyan.opacity(0.30)], startPoint: .top, endPoint: .bottom))
+                                    : (isLight
+                                        ? LinearGradient(colors: [Color.black.opacity(0.12), Color.black.opacity(0.04)], startPoint: .top, endPoint: .bottom)
+                                        : LinearGradient(colors: [Color.white.opacity(0.28), Color.white.opacity(0.08)], startPoint: .top, endPoint: .bottom)),
+                                lineWidth: settings.ambientGlowEnabled ? 1.2 : 1.0
                             )
                     )
+                    // Layer 1: Ambient outer cyan radiance (glows and softly breathes to catch peripheral vision)
                     .shadow(
-                        color: isLight ? Color.black.opacity(0.14) : Color.black.opacity(0.40),
-                        radius: isLight ? 8 : 12,
+                        color: settings.ambientGlowEnabled
+                            ? Color.cyan.opacity(isLight ? (0.28 + 0.18 * effectiveGlow) : (0.35 + 0.30 * effectiveGlow))
+                            : Color.clear,
+                        radius: settings.ambientGlowEnabled ? CGFloat(12.0 + 10.0 * effectiveGlow) : 0,
                         x: 0,
-                        y: isLight ? 4 : 6
+                        y: isLight ? 2 : 4
+                    )
+                    // Layer 2: Wider diffused mint/teal haze
+                    .shadow(
+                        color: settings.ambientGlowEnabled
+                            ? Color.mint.opacity(isLight ? (0.12 + 0.10 * effectiveGlow) : (0.18 + 0.18 * effectiveGlow))
+                            : Color.clear,
+                        radius: settings.ambientGlowEnabled ? CGFloat(20.0 + 14.0 * effectiveGlow) : 0,
+                        x: 0,
+                        y: 0
+                    )
+                    // Layer 3: Physical grounding elevation shadow
+                    .shadow(
+                        color: isLight ? Color.black.opacity(0.12) : Color.black.opacity(0.50),
+                        radius: isLight ? 6 : 10,
+                        x: 0,
+                        y: isLight ? 3 : 5
                     )
             )
         }

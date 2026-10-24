@@ -7,7 +7,7 @@ A lightweight, native macOS menu bar app designed to prevent digital eye strain 
 ## Features
 
 - **Eye Rest Break (20-20-20 Rule):** Beautiful frosted-glass card with a countdown ring reminding you to rest your eyes on distant objects. Includes **Snooze (5m)** and **Skip (Esc)**.
-- **Dynamic Island Blink Nudge:** Floats right beneath your MacBook notch in a sleek, non-intrusive micro-capsule with an animated blinking eye and countdown.
+- **Dynamic Island Blink Nudge:** Floats right beneath your MacBook notch with an animated blinking eye, countdown ring, and an ambient luminous aura that gently catches peripheral attention across dark and light apps. Can be toggled in Preferences.
 - **Smart Video Detection (v2.0):** Automatically detects video playback in browsers (Safari, Chrome, Arc, Edge) and media players (QuickTime, VLC, IINA). Independently configure in Preferences (`⌘,`) whether to pause fullscreen eye breaks, notch blink nudges, or both during video playback.
 - **Ultra-Lightweight & Native:** Pure Swift and SwiftUI. Uses **0.0% idle CPU** and only **~23 MB RAM**.
 - **Tactile & Fluid:** Physical spring animations, Force Touch trackpad haptics on sliders, and native macOS notification chimes.

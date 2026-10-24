@@ -204,6 +204,29 @@ public struct SettingsView: View {
                                 .foregroundColor(.primary)
                                 .frame(width: 58, alignment: .trailing)
                         }
+
+                        Divider().opacity(0.6)
+
+                        // Ambient glow toggle
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Ambient Luminous Glow")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.primary)
+                                Text("Diffused cyan aura around capsule to catch peripheral attention")
+                                    .font(.system(size: 10.5))
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer()
+
+                            Toggle("", isOn: $settings.ambientGlowEnabled)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                                .onChange(of: settings.ambientGlowEnabled) { _ in
+                                    HapticManager.shared.buttonClick()
+                                }
+                        }
                     }
                     .padding(16)
                     .background(

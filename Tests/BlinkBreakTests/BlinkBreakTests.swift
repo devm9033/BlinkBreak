@@ -24,6 +24,7 @@ struct BlinkBreakTests {
         #expect(settings.blinkIntervalMinutes > 0)
         #expect(settings.pauseBreaksDuringVideo == true)
         #expect(settings.pauseBlinksDuringVideo == false)
+        #expect(settings.ambientGlowEnabled == true)
         #expect(settings.isPaused == false)
     }
 
@@ -37,6 +38,15 @@ struct BlinkBreakTests {
         settings.resume()
         #expect(settings.isPaused == false)
         #expect(settings.pauseUntil == nil)
+    }
+
+    @Test("Ambient glow toggle persistence")
+    func ambientGlowToggle() {
+        let settings = AppSettings.shared
+        settings.ambientGlowEnabled = false
+        #expect(settings.ambientGlowEnabled == false)
+        settings.ambientGlowEnabled = true
+        #expect(settings.ambientGlowEnabled == true)
     }
 
     @Test("BreakManager duration formatting")

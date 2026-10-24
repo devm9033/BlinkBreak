@@ -14,6 +14,7 @@ public final class AppSettings: ObservableObject {
         static let breakSoundName = "breakSoundName"
         static let pauseBreaksDuringVideo = "pauseBreaksDuringVideo"
         static let pauseBlinksDuringVideo = "pauseBlinksDuringVideo"
+        static let ambientGlowEnabled = "ambientGlowEnabled"
     }
 
     @Published public var breakIntervalMinutes: Int {
@@ -69,6 +70,13 @@ public final class AppSettings: ObservableObject {
         }
     }
 
+    @Published public var ambientGlowEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(ambientGlowEnabled, forKey: Keys.ambientGlowEnabled)
+            onSettingsChanged?()
+        }
+    }
+
     @Published public var isPaused: Bool = false
     @Published public var pauseUntil: Date? = nil
 
@@ -85,7 +93,8 @@ public final class AppSettings: ObservableObject {
             Keys.blinkSoundName: "Pop",
             Keys.breakSoundName: "Glass",
             Keys.pauseBreaksDuringVideo: true,
-            Keys.pauseBlinksDuringVideo: false
+            Keys.pauseBlinksDuringVideo: false,
+            Keys.ambientGlowEnabled: true
         ])
 
         let savedBreakInterval = defaults.integer(forKey: Keys.breakIntervalMinutes)
@@ -107,6 +116,11 @@ public final class AppSettings: ObservableObject {
             self.pauseBlinksDuringVideo = defaults.bool(forKey: Keys.pauseBlinksDuringVideo)
         } else {
             self.pauseBlinksDuringVideo = false
+        }
+        if defaults.object(forKey: Keys.ambientGlowEnabled) != nil {
+            self.ambientGlowEnabled = defaults.bool(forKey: Keys.ambientGlowEnabled)
+        } else {
+            self.ambientGlowEnabled = true
         }
     }
 
