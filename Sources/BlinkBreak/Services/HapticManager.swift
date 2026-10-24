@@ -21,4 +21,20 @@ public final class HapticManager {
             performanceTime: .default
         )
     }
+
+    /// Delicate tactile tick when cursor touches or enters the floating pill
+    public func pillHover() {
+        NSHapticFeedbackManager.defaultPerformer.perform(
+            .alignment,
+            performanceTime: .default
+        )
+    }
+
+    /// Crisp click feedback when dismissing or clicking cut symbol
+    public func dismissClick() {
+        NSHapticFeedbackManager.defaultPerformer.perform(
+            .levelChange,
+            performanceTime: .default
+        )
+    }
 }

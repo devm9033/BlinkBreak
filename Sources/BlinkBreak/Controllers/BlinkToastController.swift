@@ -54,6 +54,7 @@ public final class BlinkToastController {
             panel.level = .statusBar
             panel.hasShadow = false
             panel.ignoresMouseEvents = false
+            panel.acceptsMouseMovedEvents = true
             panel.collectionBehavior = [.canJoinAllSpaces, .transient, .fullScreenAuxiliary]
             toastPanel = panel
         }

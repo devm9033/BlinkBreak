@@ -122,7 +122,10 @@ public struct BlinkToastView: View {
                     .shadow(color: Color.black.opacity(0.40), radius: 1.5, x: 0, y: 1)
 
                 // Frosted Circular Dismiss Button (Apple Dynamic Island Style)
-                Button(action: onDismiss) {
+                Button(action: {
+                    HapticManager.shared.dismissClick()
+                    onDismiss()
+                }) {
                     ZStack {
                         Circle()
                             .fill(Color.white.opacity(0.16))
@@ -232,6 +235,11 @@ public struct BlinkToastView: View {
             )
             // Whole-pill organic breathing scale
             .scaleEffect(reduceMotion ? 1.0 : state.breatheScale)
+            .onHover { isHovered in
+                if isHovered {
+                    HapticManager.shared.pillHover()
+                }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
