@@ -23,6 +23,7 @@ struct BlinkBreakTests {
         #expect(settings.breakDurationSeconds > 0)
         #expect(settings.blinkIntervalMinutes > 0)
         #expect(settings.pauseBreaksDuringVideo == true)
+        #expect(settings.pauseBlinksDuringVideo == false)
         #expect(settings.isPaused == false)
     }
 
@@ -97,12 +98,72 @@ struct BlinkBreakTests {
         #expect(manager.isVideoPlaying == true)
         #expect(manager.videoProcessName == "Safari")
         #expect(manager.isBreakPausedDueToVideo == true)
+        #expect(manager.isBlinkPausedDueToVideo == false)
 
         // Break timer must be FROZEN (not decremented)
         #expect(manager.timeUntilBreak == initialBreakTime)
 
         // Blink reminder must CONTINUE counting down (decremented by 1)
         #expect(manager.timeUntilBlink == initialBlinkTime - 1)
+    }
+
+    @Test("Video playback pauses both break and blink reminders when both settings are enabled")
+    func videoPlaybackPausesBothWhenBothEnabled() {
+        let manager = BreakManager.shared
+        let settings = AppSettings.shared
+        settings.pauseBreaksDuringVideo = true
+        settings.pauseBlinksDuringVideo = true
+        settings.resume()
+        manager.resetTimers()
+
+        let initialBreakTime = manager.timeUntilBreak
+        let initialBlinkTime = manager.timeUntilBlink
+
+        manager.detector = MockVideoDetector(isVideoPlaying: true, isDisplayOn: true, playingProcessName: "Arc")
+
+        manager.tick()
+
+        #expect(manager.isVideoPlaying == true)
+        #expect(manager.videoProcessName == "Arc")
+        #expect(manager.isBreakPausedDueToVideo == true)
+        #expect(manager.isBlinkPausedDueToVideo == true)
+
+        // Both timers must be FROZEN
+        #expect(manager.timeUntilBreak == initialBreakTime)
+        #expect(manager.timeUntilBlink == initialBlinkTime)
+
+        // Reset setting
+        settings.pauseBlinksDuringVideo = false
+    }
+
+    @Test("Video playback pauses blink reminder only if break pausing is disabled")
+    func videoPlaybackPausesBlinkOnly() {
+        let manager = BreakManager.shared
+        let settings = AppSettings.shared
+        settings.pauseBreaksDuringVideo = false
+        settings.pauseBlinksDuringVideo = true
+        settings.resume()
+        manager.resetTimers()
+
+        let initialBreakTime = manager.timeUntilBreak
+        let initialBlinkTime = manager.timeUntilBlink
+
+        manager.detector = MockVideoDetector(isVideoPlaying: true, isDisplayOn: true, playingProcessName: "VLC")
+
+        manager.tick()
+
+        #expect(manager.isVideoPlaying == true)
+        #expect(manager.videoProcessName == "VLC")
+        #expect(manager.isBreakPausedDueToVideo == false)
+        #expect(manager.isBlinkPausedDueToVideo == true)
+
+        // Break timer decrements, blink timer is FROZEN
+        #expect(manager.timeUntilBreak == initialBreakTime - 1)
+        #expect(manager.timeUntilBlink == initialBlinkTime)
+
+        // Reset settings
+        settings.pauseBreaksDuringVideo = true
+        settings.pauseBlinksDuringVideo = false
     }
 
     @Test("Video playback does NOT pause break timer if user setting is disabled")

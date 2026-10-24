@@ -16,6 +16,7 @@ public final class BreakManager: ObservableObject {
     @Published public private(set) var isVideoPlaying: Bool = false
     @Published public private(set) var videoProcessName: String? = nil
     @Published public private(set) var isBreakPausedDueToVideo: Bool = false
+    @Published public private(set) var isBlinkPausedDueToVideo: Bool = false
 
     public var detector: VideoPlaybackDetecting = VideoPlaybackDetector.shared
 
@@ -79,6 +80,7 @@ public final class BreakManager: ObservableObject {
         self.isVideoPlaying = status.isVideoPlaying
         self.videoProcessName = status.playingProcessName
         self.isBreakPausedDueToVideo = status.isVideoPlaying && settings.pauseBreaksDuringVideo
+        self.isBlinkPausedDueToVideo = status.isVideoPlaying && settings.pauseBlinksDuringVideo
 
         if isBreakActive {
             breakRemainingSeconds -= 1
@@ -95,10 +97,12 @@ public final class BreakManager: ObservableObject {
                 }
             }
 
-            // Blink reminder continues independently so eyes stay hydrated during videos
-            timeUntilBlink -= 1
-            if timeUntilBlink <= 0 {
-                triggerBlink()
+            // Only decrement blink timer if not paused due to video playback
+            if !isBlinkPausedDueToVideo {
+                timeUntilBlink -= 1
+                if timeUntilBlink <= 0 {
+                    triggerBlink()
+                }
             }
         }
 

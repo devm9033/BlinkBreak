@@ -13,6 +13,7 @@ public final class AppSettings: ObservableObject {
         static let blinkSoundName = "blinkSoundName"
         static let breakSoundName = "breakSoundName"
         static let pauseBreaksDuringVideo = "pauseBreaksDuringVideo"
+        static let pauseBlinksDuringVideo = "pauseBlinksDuringVideo"
     }
 
     @Published public var breakIntervalMinutes: Int {
@@ -61,6 +62,13 @@ public final class AppSettings: ObservableObject {
         }
     }
 
+    @Published public var pauseBlinksDuringVideo: Bool {
+        didSet {
+            UserDefaults.standard.set(pauseBlinksDuringVideo, forKey: Keys.pauseBlinksDuringVideo)
+            onSettingsChanged?()
+        }
+    }
+
     @Published public var isPaused: Bool = false
     @Published public var pauseUntil: Date? = nil
 
@@ -76,7 +84,8 @@ public final class AppSettings: ObservableObject {
             Keys.soundEnabled: true,
             Keys.blinkSoundName: "Pop",
             Keys.breakSoundName: "Glass",
-            Keys.pauseBreaksDuringVideo: true
+            Keys.pauseBreaksDuringVideo: true,
+            Keys.pauseBlinksDuringVideo: false
         ])
 
         let savedBreakInterval = defaults.integer(forKey: Keys.breakIntervalMinutes)
@@ -93,6 +102,11 @@ public final class AppSettings: ObservableObject {
             self.pauseBreaksDuringVideo = defaults.bool(forKey: Keys.pauseBreaksDuringVideo)
         } else {
             self.pauseBreaksDuringVideo = true
+        }
+        if defaults.object(forKey: Keys.pauseBlinksDuringVideo) != nil {
+            self.pauseBlinksDuringVideo = defaults.bool(forKey: Keys.pauseBlinksDuringVideo)
+        } else {
+            self.pauseBlinksDuringVideo = false
         }
     }
 

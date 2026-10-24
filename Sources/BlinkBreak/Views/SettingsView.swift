@@ -215,16 +215,34 @@ public struct SettingsView: View {
                             )
                     )
 
-                    // Section 3: Video Playback Detection (Release 2)
-                    VStack(alignment: .leading, spacing: 12) {
+                    // Section 3: Smart Video Playback Detection
+                    VStack(alignment: .leading, spacing: 13) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "play.tv")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.cyan)
+                            Text("Smart Video Detection")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundColor(.primary)
+                            Spacer()
+                        }
+
+                        Text("Automatically detects video playback in browsers (Safari, Chrome, Arc) and media players (QuickTime, VLC, TV).")
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundColor(.secondary)
+                            .lineSpacing(2)
+
+                        Divider().opacity(0.6)
+
+                        // Option 1: Pause Break Timer
                         HStack {
-                            HStack(spacing: 8) {
-                                Image(systemName: "play.tv")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.cyan)
-                                Text("Video Playback")
-                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Pause eye rest breaks")
+                                    .font(.system(size: 12, weight: .medium))
                                     .foregroundColor(.primary)
+                                Text("Prevents fullscreen rest screens from interrupting videos")
+                                    .font(.system(size: 10.5))
+                                    .foregroundColor(.secondary)
                             }
 
                             Spacer()
@@ -237,14 +255,26 @@ public struct SettingsView: View {
                                 }
                         }
 
-                        Text("Pause break timer while watching videos")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.primary)
+                        // Option 2: Pause Blink Reminder
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Pause blink reminders")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.primary)
+                                Text("Prevents notch micro-capsule popups during videos")
+                                    .font(.system(size: 10.5))
+                                    .foregroundColor(.secondary)
+                            }
 
-                        Text("Automatically suspends fullscreen break screens while video is playing in browsers (Safari, Chrome, etc.) or desktop media players (QuickTime, VLC, TV, etc.). Blink reminders remain active so your eyes stay moist.")
-                            .font(.system(size: 11, weight: .regular))
-                            .foregroundColor(.secondary)
-                            .lineSpacing(2)
+                            Spacer()
+
+                            Toggle("", isOn: $settings.pauseBlinksDuringVideo)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                                .onChange(of: settings.pauseBlinksDuringVideo) { _ in
+                                    HapticManager.shared.buttonClick()
+                                }
+                        }
 
                         Divider().opacity(0.6)
 
@@ -255,11 +285,14 @@ public struct SettingsView: View {
                                 .frame(width: 7, height: 7)
 
                             if BreakManager.shared.isVideoPlaying {
-                                Text("Video playing" + (BreakManager.shared.videoProcessName.map { " in \($0)" } ?? "") + (settings.pauseBreaksDuringVideo ? " — Breaks paused" : " — Breaks active"))
+                                let proc = BreakManager.shared.videoProcessName.map { " in \($0)" } ?? ""
+                                let breakPart = settings.pauseBreaksDuringVideo ? "Breaks paused" : "Breaks active"
+                                let blinkPart = settings.pauseBlinksDuringVideo ? "Blinks paused" : "Blinks active"
+                                Text("Video playing\(proc) — \(breakPart), \(blinkPart)")
                                     .font(.system(size: 11, weight: .medium))
                                     .foregroundColor(Color.green)
                             } else {
-                                Text("No video detected — Regular break schedule active")
+                                Text("No video detected — Regular schedule active")
                                     .font(.system(size: 11, weight: .regular))
                                     .foregroundColor(.secondary)
                             }
@@ -421,7 +454,7 @@ public struct SettingsView: View {
                 .padding(.bottom, 20)
             }
         }
-        .frame(width: 460, height: 580)
+        .frame(width: 460, height: 600)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 }
