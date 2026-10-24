@@ -9,6 +9,7 @@ public final class BlinkToastState: ObservableObject {
     @Published public var isEyeClosed: Bool = false
     @Published public var isVisible: Bool = false
     @Published public var glowIntensity: Double = 0.5
+    @Published public var glowAngle: Double = 0.0
 
     private var countdownTask: Task<Void, Never>?
 
@@ -20,6 +21,7 @@ public final class BlinkToastState: ObservableObject {
         isEyeClosed = false
         isVisible = true
         glowIntensity = 0.5
+        glowAngle = 0.0
 
         countdownTask?.cancel()
         countdownTask = Task { @MainActor [weak self] in
@@ -40,6 +42,9 @@ public final class BlinkToastState: ObservableObject {
                 // Smooth sinusoidal breathing aura (normalized 0.0 ... 1.0)
                 let wave = sin((elapsed / 1.6) * .pi * 2.0)
                 self.glowIntensity = (wave + 1.0) / 2.0
+
+                // Smooth rotational shimmer around the pill contour (72 deg/sec = full 360° over 5s)
+                self.glowAngle = (elapsed * 72.0).truncatingRemainder(dividingBy: 360.0)
             }
 
             guard let self = self, !Task.isCancelled else { return }
@@ -147,46 +152,83 @@ public struct BlinkToastView: View {
             .padding(.vertical, 6)
             .frame(height: 40)
             .background(
-                Capsule()
-                    .fill(isLight ? Color.white.opacity(0.95) : Color(red: 0.11, green: 0.12, blue: 0.15).opacity(0.96))
-                    .overlay(
+                ZStack {
+                    if settings.ambientGlowEnabled {
+                        // Multi-color aura Layer 1: Wider soft halo hugging pill contour in 360°
                         Capsule()
                             .stroke(
-                                settings.ambientGlowEnabled
-                                    ? (isLight
-                                        ? LinearGradient(colors: [Color.cyan.opacity(0.50), Color.cyan.opacity(0.20)], startPoint: .top, endPoint: .bottom)
-                                        : LinearGradient(colors: [Color.cyan.opacity(0.75), Color.cyan.opacity(0.30)], startPoint: .top, endPoint: .bottom))
-                                    : (isLight
-                                        ? LinearGradient(colors: [Color.black.opacity(0.12), Color.black.opacity(0.04)], startPoint: .top, endPoint: .bottom)
-                                        : LinearGradient(colors: [Color.white.opacity(0.28), Color.white.opacity(0.08)], startPoint: .top, endPoint: .bottom)),
-                                lineWidth: settings.ambientGlowEnabled ? 1.2 : 1.0
+                                AngularGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(red: 0.05, green: 0.85, blue: 1.00), // Electric Cyan
+                                        Color(red: 0.58, green: 0.38, blue: 0.98), // Royal Indigo
+                                        Color(red: 0.96, green: 0.32, blue: 0.68), // Apple Rose / Magenta
+                                        Color(red: 0.15, green: 0.88, blue: 0.62), // Radiant Mint
+                                        Color(red: 0.05, green: 0.85, blue: 1.00)  // Loop to Cyan
+                                    ]),
+                                    center: .center,
+                                    angle: .degrees(state.glowAngle)
+                                ),
+                                lineWidth: 8
                             )
-                    )
-                    // Layer 1: Ambient outer cyan radiance (glows and softly breathes to catch peripheral vision)
-                    .shadow(
-                        color: settings.ambientGlowEnabled
-                            ? Color.cyan.opacity(isLight ? (0.28 + 0.18 * effectiveGlow) : (0.35 + 0.30 * effectiveGlow))
-                            : Color.clear,
-                        radius: settings.ambientGlowEnabled ? CGFloat(12.0 + 10.0 * effectiveGlow) : 0,
-                        x: 0,
-                        y: isLight ? 2 : 4
-                    )
-                    // Layer 2: Wider diffused mint/teal haze
-                    .shadow(
-                        color: settings.ambientGlowEnabled
-                            ? Color.mint.opacity(isLight ? (0.12 + 0.10 * effectiveGlow) : (0.18 + 0.18 * effectiveGlow))
-                            : Color.clear,
-                        radius: settings.ambientGlowEnabled ? CGFloat(20.0 + 14.0 * effectiveGlow) : 0,
-                        x: 0,
-                        y: 0
-                    )
-                    // Layer 3: Physical grounding elevation shadow
-                    .shadow(
-                        color: isLight ? Color.black.opacity(0.12) : Color.black.opacity(0.50),
-                        radius: isLight ? 6 : 10,
-                        x: 0,
-                        y: isLight ? 3 : 5
-                    )
+                            .blur(radius: CGFloat(10.0 + 4.0 * effectiveGlow))
+                            .opacity(isLight ? 0.45 : (0.50 + 0.35 * effectiveGlow))
+
+                        // Multi-color aura Layer 2: Tight concentric contour halo
+                        Capsule()
+                            .stroke(
+                                AngularGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(red: 0.05, green: 0.85, blue: 1.00),
+                                        Color(red: 0.58, green: 0.38, blue: 0.98),
+                                        Color(red: 0.96, green: 0.32, blue: 0.68),
+                                        Color(red: 0.15, green: 0.88, blue: 0.62),
+                                        Color(red: 0.05, green: 0.85, blue: 1.00)
+                                    ]),
+                                    center: .center,
+                                    angle: .degrees(state.glowAngle)
+                                ),
+                                lineWidth: 3.5
+                            )
+                            .blur(radius: CGFloat(4.0 + 2.0 * effectiveGlow))
+                            .opacity(isLight ? 0.70 : (0.75 + 0.25 * effectiveGlow))
+                    }
+
+                    // Main Capsule Solid Body
+                    Capsule()
+                        .fill(isLight ? Color.white.opacity(0.96) : Color(red: 0.11, green: 0.12, blue: 0.15).opacity(0.97))
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(
+                                    settings.ambientGlowEnabled
+                                        ? AnyShapeStyle(
+                                            AngularGradient(
+                                                gradient: Gradient(colors: [
+                                                    Color(red: 0.20, green: 0.90, blue: 1.00),
+                                                    Color(red: 0.68, green: 0.48, blue: 1.00),
+                                                    Color(red: 1.00, green: 0.45, blue: 0.75),
+                                                    Color(red: 0.30, green: 0.95, blue: 0.70),
+                                                    Color(red: 0.20, green: 0.90, blue: 1.00)
+                                                ]),
+                                                center: .center,
+                                                angle: .degrees(state.glowAngle)
+                                            )
+                                        )
+                                        : AnyShapeStyle(
+                                            isLight
+                                                ? LinearGradient(colors: [Color.black.opacity(0.12), Color.black.opacity(0.04)], startPoint: .top, endPoint: .bottom)
+                                                : LinearGradient(colors: [Color.white.opacity(0.28), Color.white.opacity(0.08)], startPoint: .top, endPoint: .bottom)
+                                        ),
+                                    lineWidth: settings.ambientGlowEnabled ? 1.4 : 1.0
+                                )
+                        )
+                        // Clean physical grounding elevation shadow
+                        .shadow(
+                            color: isLight ? Color.black.opacity(0.12) : Color.black.opacity(0.50),
+                            radius: isLight ? 4 : 8,
+                            x: 0,
+                            y: isLight ? 2 : 3
+                        )
+                }
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
