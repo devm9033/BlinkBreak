@@ -63,9 +63,12 @@ public final class BlinkToastController {
             self?.hide()
         }
 
+        panel.appearance = NSApp.effectiveAppearance
+
         let hostingView = NSHostingView(rootView: contentView)
         hostingView.wantsLayer = true
         hostingView.layer?.backgroundColor = NSColor.clear.cgColor
+        hostingView.appearance = NSApp.effectiveAppearance
         panel.contentView = hostingView
 
         panel.setFrame(NSRect(x: targetX, y: startY, width: panelWidth, height: panelHeight), display: true)

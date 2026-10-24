@@ -108,36 +108,52 @@ public struct BlinkToastView: View {
     }
 
     private var isLight: Bool {
-        colorScheme == .light
+        if colorScheme == .light { return true }
+        if let appearance = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]), appearance == .aqua {
+            return true
+        }
+        return false
     }
 
     public var body: some View {
         ZStack(alignment: .center) {
             // Pure Borderless Liquid Glass Pill
             HStack(spacing: 8) {
-                // Zen Typography: Just "Blink Eyes" (No timer, no eye icon)
+                // Zen Typography: Just "Blink Eyes" (Adaptive to Light & Dark appearance)
                 Text("Blink Eyes")
                     .font(.system(size: 13.5, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .shadow(color: Color.black.opacity(0.40), radius: 1.5, x: 0, y: 1)
+                    .foregroundColor(isLight ? Color(red: 0.10, green: 0.12, blue: 0.16) : .white)
+                    .shadow(
+                        color: isLight ? Color.white.opacity(0.80) : Color.black.opacity(0.40),
+                        radius: 1.5,
+                        x: 0,
+                        y: 1
+                    )
 
-                // Frosted Circular Dismiss Button (Apple Dynamic Island Style)
+                // Frosted Circular Dismiss Button (Adaptive to Light & Dark appearance)
                 Button(action: {
                     HapticManager.shared.dismissClick()
                     onDismiss()
                 }) {
                     ZStack {
                         Circle()
-                            .fill(Color.white.opacity(0.16))
+                            .fill(isLight ? Color.black.opacity(0.08) : Color.white.opacity(0.16))
                             .overlay(
                                 Circle()
-                                    .strokeBorder(Color.white.opacity(0.24), lineWidth: 0.5)
+                                    .strokeBorder(
+                                        isLight ? Color.black.opacity(0.12) : Color.white.opacity(0.24),
+                                        lineWidth: 0.5
+                                    )
                             )
                             .frame(width: 19, height: 19)
 
                         Image(systemName: "xmark")
                             .font(.system(size: 8.5, weight: .bold))
-                            .foregroundColor(Color.white.opacity(0.92))
+                            .foregroundColor(
+                                isLight
+                                    ? Color(red: 0.15, green: 0.18, blue: 0.22).opacity(0.85)
+                                    : Color.white.opacity(0.92)
+                            )
                     }
                     .contentShape(Circle())
                 }
@@ -149,11 +165,11 @@ public struct BlinkToastView: View {
             .frame(height: 36)
             .background(
                 ZStack {
-                    // 1. Base Liquid Glass material
+                    // 1. Base Liquid Glass material (White Crystal Glass in Light Mode, Obsidian Glass in Dark Mode)
                     Capsule()
                         .fill(
                             isLight
-                                ? Color(red: 0.12, green: 0.14, blue: 0.18).opacity(0.88)
+                                ? Color(red: 0.96, green: 0.97, blue: 0.99).opacity(0.92)
                                 : Color(red: 0.06, green: 0.07, blue: 0.09).opacity(0.92)
                         )
 
@@ -163,8 +179,8 @@ public struct BlinkToastView: View {
                             // Fluid Wave Blob 1: Cyan + Royal Violet
                             RadialGradient(
                                 gradient: Gradient(colors: [
-                                    Color(red: 0.05, green: 0.85, blue: 1.00).opacity(0.70), // Electric Cyan
-                                    Color(red: 0.58, green: 0.38, blue: 0.98).opacity(0.60), // Royal Indigo / Violet
+                                    Color(red: 0.05, green: 0.85, blue: 1.00).opacity(isLight ? 0.45 : 0.70), // Electric Cyan
+                                    Color(red: 0.58, green: 0.38, blue: 0.98).opacity(isLight ? 0.35 : 0.60), // Royal Indigo / Violet
                                     Color.clear
                                 ]),
                                 center: .center,
@@ -179,8 +195,8 @@ public struct BlinkToastView: View {
                             // Fluid Wave Blob 2: Radiant Mint + Apple Rose
                             RadialGradient(
                                 gradient: Gradient(colors: [
-                                    Color(red: 0.15, green: 0.88, blue: 0.62).opacity(0.65), // Radiant Emerald Mint
-                                    Color(red: 0.96, green: 0.32, blue: 0.68).opacity(0.50), // Apple Rose / Magenta
+                                    Color(red: 0.15, green: 0.88, blue: 0.62).opacity(isLight ? 0.40 : 0.65), // Radiant Emerald Mint
+                                    Color(red: 0.96, green: 0.32, blue: 0.68).opacity(isLight ? 0.30 : 0.50), // Apple Rose / Magenta
                                     Color.clear
                                 ]),
                                 center: .center,
@@ -200,8 +216,8 @@ public struct BlinkToastView: View {
                         .strokeBorder(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.40),
-                                    Color.white.opacity(0.08),
+                                    isLight ? Color.white.opacity(0.95) : Color.white.opacity(0.40),
+                                    isLight ? Color.white.opacity(0.40) : Color.white.opacity(0.08),
                                     Color.clear
                                 ],
                                 startPoint: .top,
@@ -216,7 +232,7 @@ public struct BlinkToastView: View {
                             LinearGradient(
                                 colors: [
                                     Color.clear,
-                                    Color.black.opacity(0.45)
+                                    isLight ? Color.black.opacity(0.08) : Color.black.opacity(0.45)
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -226,9 +242,9 @@ public struct BlinkToastView: View {
                 }
             )
             .clipShape(Capsule())
-            // Natural elevation shadow (Zero boxy outer glow - strictly tight drop shadow)
+            // Natural elevation shadow (Adaptive in Light & Dark modes)
             .shadow(
-                color: Color.black.opacity(0.40),
+                color: isLight ? Color.black.opacity(0.14) : Color.black.opacity(0.40),
                 radius: 6,
                 x: 0,
                 y: 3
