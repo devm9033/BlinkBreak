@@ -87,6 +87,15 @@ public final class BlinkToastState: ObservableObject {
     }
 }
 
+private struct TactileCircularButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.88 : 1.0)
+            .opacity(configuration.isPressed ? 0.70 : 1.0)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
 public struct BlinkToastView: View {
     @ObservedObject var state = BlinkToastState.shared
     @ObservedObject var settings = AppSettings.shared
@@ -105,27 +114,36 @@ public struct BlinkToastView: View {
     public var body: some View {
         ZStack(alignment: .center) {
             // Pure Borderless Liquid Glass Pill
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 // Zen Typography: Just "Blink Eyes" (No timer, no eye icon)
                 Text("Blink Eyes")
                     .font(.system(size: 13.5, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .shadow(color: Color.black.opacity(0.40), radius: 1.5, x: 0, y: 1)
 
-                // Subtle Quick Dismiss ('x') Button
+                // Frosted Circular Dismiss Button (Apple Dynamic Island Style)
                 Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 9.5, weight: .bold))
-                        .foregroundColor(Color.white.opacity(0.65))
-                        .padding(5)
-                        .contentShape(Rectangle())
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.16))
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(Color.white.opacity(0.24), lineWidth: 0.5)
+                            )
+                            .frame(width: 19, height: 19)
+
+                        Image(systemName: "xmark")
+                            .font(.system(size: 8.5, weight: .bold))
+                            .foregroundColor(Color.white.opacity(0.92))
+                    }
+                    .contentShape(Circle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TactileCircularButtonStyle())
                 .help("Dismiss reminder")
             }
-            .padding(.leading, 18)
-            .padding(.trailing, 12)
-            .frame(height: 38)
+            .padding(.leading, 14)
+            .padding(.trailing, 8)
+            .frame(height: 36)
             .background(
                 ZStack {
                     // 1. Base Liquid Glass material
