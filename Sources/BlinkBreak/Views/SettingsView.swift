@@ -32,7 +32,7 @@ public struct SettingsView: View {
                             .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
 
-                        Text("v1.0")
+                        Text("v2.0")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundColor(.secondary)
                             .padding(.horizontal, 6)
@@ -215,7 +215,69 @@ public struct SettingsView: View {
                             )
                     )
 
-                    // Section 3: Native Sound Alerts
+                    // Section 3: Video Playback Detection (Release 2)
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            HStack(spacing: 8) {
+                                Image(systemName: "play.tv")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.cyan)
+                                Text("Video Playback")
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primary)
+                            }
+
+                            Spacer()
+
+                            Toggle("", isOn: $settings.pauseBreaksDuringVideo)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                                .onChange(of: settings.pauseBreaksDuringVideo) { _ in
+                                    HapticManager.shared.buttonClick()
+                                }
+                        }
+
+                        Text("Pause break timer while watching videos")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.primary)
+
+                        Text("Automatically suspends fullscreen break screens while video is playing in browsers (Safari, Chrome, etc.) or desktop media players (QuickTime, VLC, TV, etc.). Blink reminders remain active so your eyes stay moist.")
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundColor(.secondary)
+                            .lineSpacing(2)
+
+                        Divider().opacity(0.6)
+
+                        // Live status indicator
+                        HStack(spacing: 7) {
+                            Circle()
+                                .fill(BreakManager.shared.isVideoPlaying ? Color.green : Color.secondary.opacity(0.4))
+                                .frame(width: 7, height: 7)
+
+                            if BreakManager.shared.isVideoPlaying {
+                                Text("Video playing" + (BreakManager.shared.videoProcessName.map { " in \($0)" } ?? "") + (settings.pauseBreaksDuringVideo ? " — Breaks paused" : " — Breaks active"))
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(Color.green)
+                            } else {
+                                Text("No video detected — Regular break schedule active")
+                                    .font(.system(size: 11, weight: .regular))
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer()
+                        }
+                    }
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color(nsColor: .controlBackgroundColor))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                            )
+                    )
+
+                    // Section 4: Native Sound Alerts
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             HStack(spacing: 8) {
@@ -359,7 +421,7 @@ public struct SettingsView: View {
                 .padding(.bottom, 20)
             }
         }
-        .frame(width: 450, height: 530)
+        .frame(width: 460, height: 580)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 }

@@ -49,9 +49,9 @@ cat << 'EOF' > "$APP_DIR/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>2.0.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
@@ -66,4 +66,10 @@ EOF
 echo "=== Signing $APP_NAME.app ==="
 codesign --force --deep --sign - "$APP_DIR"
 
-echo "=== Successfully built $APP_DIR ==="
+echo "=== Creating BlinkBreak-macOS.zip ==="
+cd "$DIR/build"
+rm -f BlinkBreak-macOS.zip
+zip -rq -y BlinkBreak-macOS.zip "$APP_NAME.app"
+cd "$DIR"
+
+echo "=== Successfully built and packaged $APP_DIR ==="

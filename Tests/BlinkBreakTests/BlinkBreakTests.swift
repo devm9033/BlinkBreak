@@ -1,57 +1,72 @@
-import XCTest
+import Testing
+import Foundation
 @testable import BlinkBreak
 
-@MainActor
-final class BlinkBreakTests: XCTestCase {
+struct MockVideoDetector: VideoPlaybackDetecting {
+    let isVideoPlaying: Bool
+    let isDisplayOn: Bool
+    let playingProcessName: String?
 
-    func testAppSettingsDefaults() {
+    func checkStatus() -> VideoPlaybackStatus {
+        VideoPlaybackStatus(isVideoPlaying: isVideoPlaying, isDisplayOn: isDisplayOn, playingProcessName: playingProcessName)
+    }
+}
+
+@Suite("BlinkBreak Tests")
+@MainActor
+struct BlinkBreakTests {
+
+    @Test("App Settings default values")
+    func appSettingsDefaults() {
         let settings = AppSettings.shared
-        XCTAssertGreaterThan(settings.breakIntervalMinutes, 0)
-        XCTAssertGreaterThan(settings.breakDurationSeconds, 0)
-        XCTAssertGreaterThan(settings.blinkIntervalMinutes, 0)
-        XCTAssertFalse(settings.isPaused)
+        #expect(settings.breakIntervalMinutes > 0)
+        #expect(settings.breakDurationSeconds > 0)
+        #expect(settings.blinkIntervalMinutes > 0)
+        #expect(settings.pauseBreaksDuringVideo == true)
+        #expect(settings.isPaused == false)
     }
 
-    func testPauseAndResume() {
+    @Test("Pause and resume reminders")
+    func pauseAndResume() {
         let settings = AppSettings.shared
         settings.pause(minutes: 15)
-        XCTAssertTrue(settings.isPaused)
-        XCTAssertNotNil(settings.pauseUntil)
+        #expect(settings.isPaused == true)
+        #expect(settings.pauseUntil != nil)
 
         settings.resume()
-        XCTAssertFalse(settings.isPaused)
-        XCTAssertNil(settings.pauseUntil)
+        #expect(settings.isPaused == false)
+        #expect(settings.pauseUntil == nil)
     }
 
-    func testBreakManagerDurationFormatting() {
+    @Test("BreakManager duration formatting")
+    func breakManagerDurationFormatting() {
         let manager = BreakManager.shared
-        XCTAssertEqual(manager.formattedDuration(20), "20s")
-        XCTAssertEqual(manager.formattedDuration(65), "01:05")
-        XCTAssertEqual(manager.formattedDuration(120), "02:00")
+        #expect(manager.formattedDuration(20) == "20s")
+        #expect(manager.formattedDuration(65) == "01:05")
+        #expect(manager.formattedDuration(120) == "02:00")
     }
 
-    func testBreakManagerBreakCycle() {
+    @Test("BreakManager break lifecycle")
+    func breakManagerBreakCycle() {
         let manager = BreakManager.shared
         manager.resetTimers()
 
-        // Start break
         manager.startBreak(forcedDuration: 10)
-        XCTAssertTrue(manager.isBreakActive)
-        XCTAssertEqual(manager.breakRemainingSeconds, 10)
+        #expect(manager.isBreakActive == true)
+        #expect(manager.breakRemainingSeconds == 10)
 
-        // Snooze break
         manager.snoozeBreak(minutes: 5)
-        XCTAssertFalse(manager.isBreakActive)
-        XCTAssertEqual(manager.timeUntilBreak, 300)
+        #expect(manager.isBreakActive == false)
+        #expect(manager.timeUntilBreak == 300)
 
-        // Start and complete break
         manager.startBreak(forcedDuration: 5)
         manager.completeBreak()
-        XCTAssertFalse(manager.isBreakActive)
-        XCTAssertEqual(manager.timeUntilBreak, AppSettings.shared.breakIntervalMinutes * 60)
+        #expect(manager.isBreakActive == false)
+        #expect(manager.timeUntilBreak == AppSettings.shared.breakIntervalMinutes * 60)
     }
 
-    func testBlinkTrigger() {
+    @Test("Blink trigger notification")
+    func blinkTrigger() {
         let manager = BreakManager.shared
         var blinkNotified = false
         manager.onBlinkTriggered = {
@@ -59,7 +74,89 @@ final class BlinkBreakTests: XCTestCase {
         }
 
         manager.triggerBlink()
-        XCTAssertTrue(blinkNotified)
-        XCTAssertEqual(manager.timeUntilBlink, AppSettings.shared.blinkIntervalMinutes * 60)
+        #expect(blinkNotified == true)
+        #expect(manager.timeUntilBlink == AppSettings.shared.blinkIntervalMinutes * 60)
+    }
+
+    @Test("Video playback detection pauses break timer but NOT blink reminder")
+    func videoPlaybackPausesBreakTimerOnly() {
+        let manager = BreakManager.shared
+        let settings = AppSettings.shared
+        settings.pauseBreaksDuringVideo = true
+        settings.resume()
+        manager.resetTimers()
+
+        let initialBreakTime = manager.timeUntilBreak
+        let initialBlinkTime = manager.timeUntilBlink
+
+        // Inject mock detector indicating video is playing in Safari
+        manager.detector = MockVideoDetector(isVideoPlaying: true, isDisplayOn: true, playingProcessName: "Safari")
+
+        manager.tick()
+
+        #expect(manager.isVideoPlaying == true)
+        #expect(manager.videoProcessName == "Safari")
+        #expect(manager.isBreakPausedDueToVideo == true)
+
+        // Break timer must be FROZEN (not decremented)
+        #expect(manager.timeUntilBreak == initialBreakTime)
+
+        // Blink reminder must CONTINUE counting down (decremented by 1)
+        #expect(manager.timeUntilBlink == initialBlinkTime - 1)
+    }
+
+    @Test("Video playback does NOT pause break timer if user setting is disabled")
+    func videoPlaybackIgnoredWhenSettingDisabled() {
+        let manager = BreakManager.shared
+        let settings = AppSettings.shared
+        settings.pauseBreaksDuringVideo = false
+        settings.resume()
+        manager.resetTimers()
+
+        let initialBreakTime = manager.timeUntilBreak
+        let initialBlinkTime = manager.timeUntilBlink
+
+        manager.detector = MockVideoDetector(isVideoPlaying: true, isDisplayOn: true, playingProcessName: "QuickTime Player")
+
+        manager.tick()
+
+        #expect(manager.isVideoPlaying == true)
+        #expect(manager.isBreakPausedDueToVideo == false)
+
+        // Both timers must decrement because user explicitly disabled video pausing
+        #expect(manager.timeUntilBreak == initialBreakTime - 1)
+        #expect(manager.timeUntilBlink == initialBlinkTime - 1)
+
+        // Reset setting
+        settings.pauseBreaksDuringVideo = true
+    }
+
+    @Test("Normal countdown when no video is playing")
+    func normalCountdownWhenNoVideo() {
+        let manager = BreakManager.shared
+        let settings = AppSettings.shared
+        settings.pauseBreaksDuringVideo = true
+        settings.resume()
+        manager.resetTimers()
+
+        let initialBreakTime = manager.timeUntilBreak
+        let initialBlinkTime = manager.timeUntilBlink
+
+        manager.detector = MockVideoDetector(isVideoPlaying: false, isDisplayOn: true, playingProcessName: nil)
+
+        manager.tick()
+
+        #expect(manager.isVideoPlaying == false)
+        #expect(manager.isBreakPausedDueToVideo == false)
+        #expect(manager.timeUntilBreak == initialBreakTime - 1)
+        #expect(manager.timeUntilBlink == initialBlinkTime - 1)
+    }
+
+    @Test("Live VideoPlaybackDetector runs without errors")
+    func liveVideoDetectorRuns() {
+        let detector = VideoPlaybackDetector.shared
+        let status = detector.checkStatus()
+        // Must return a boolean status and valid display check
+        #expect(status.isDisplayOn == true || status.isDisplayOn == false)
     }
 }

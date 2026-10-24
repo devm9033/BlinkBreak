@@ -148,6 +148,12 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
             nextBlinkMenuItem.title = "Timers suspended"
             resumeMenuItem.isHidden = false
             pauseSubmenuItem.isHidden = true
+        } else if manager.isBreakPausedDueToVideo {
+            let procSuffix = manager.videoProcessName.map { " (\($0))" } ?? ""
+            nextBreakMenuItem.title = "Next Break: Paused (Video Playing\(procSuffix))"
+            nextBlinkMenuItem.title = "Next Blink: \(manager.formattedDuration(manager.timeUntilBlink))"
+            resumeMenuItem.isHidden = true
+            pauseSubmenuItem.isHidden = false
         } else {
             nextBreakMenuItem.title = "Next Break: \(manager.formattedDuration(manager.timeUntilBreak))"
             nextBlinkMenuItem.title = "Next Blink: \(manager.formattedDuration(manager.timeUntilBlink))"
