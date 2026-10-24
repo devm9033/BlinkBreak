@@ -5,7 +5,7 @@ public final class BreakOverlayViewState: ObservableObject {
     public static let shared = BreakOverlayViewState()
 
     @Published public var hasAppeared: Bool = false
-    @Published public var breatheScale: Double = 1.0
+    @Published public var glowAngle: Double = 0.0
 
     private var animationTask: Task<Void, Never>?
 
@@ -19,7 +19,7 @@ public final class BreakOverlayViewState: ObservableObject {
 
     public func appear() {
         hasAppeared = true
-        breatheScale = 1.0
+        glowAngle = 0.0
 
         animationTask?.cancel()
         animationTask = Task { @MainActor [weak self] in
@@ -32,9 +32,8 @@ public final class BreakOverlayViewState: ObservableObject {
 
                 elapsed += step
 
-                // 4.5s box-breathing cycle (calm, organic scale 1.0 ... 1.025)
-                let breatheWave = sin((elapsed / 2.25) * .pi)
-                self.breatheScale = 1.0 + 0.025 * ((breatheWave + 1.0) / 2.0)
+                // Slow, peaceful rotational sweep around the window perimeter (~14.4s full revolution)
+                self.glowAngle = (elapsed * 25.0).truncatingRemainder(dividingBy: 360.0)
             }
         }
     }
@@ -66,12 +65,34 @@ public struct BreakOverlayView: View {
 
     public var body: some View {
         ZStack {
-            // Adaptive fullscreen dimming backdrop with frosted blur
+            // 1. Adaptive fullscreen dimming backdrop with frosted blur
             (isLight ? Color.black.opacity(0.38) : Color.black.opacity(0.68))
                 .background(.ultraThinMaterial)
                 .ignoresSafeArea()
 
-            // The Floating Apple Rest Plaque
+            // 2. Ambient Softly Moving Light Halo (BEHIND the window perimeter — 360° infinite diffusion)
+            if settings.ambientGlowEnabled && !reduceMotion {
+                RoundedRectangle(cornerRadius: 48, style: .continuous)
+                    .fill(
+                        AngularGradient(
+                            gradient: Gradient(colors: [
+                                Color(red: 0.05, green: 0.85, blue: 1.00).opacity(0.60), // Electric Cyan
+                                Color(red: 0.58, green: 0.38, blue: 0.98).opacity(0.50), // Royal Indigo
+                                Color(red: 0.96, green: 0.32, blue: 0.68).opacity(0.40), // Apple Rose / Magenta
+                                Color(red: 0.15, green: 0.88, blue: 0.62).opacity(0.55), // Emerald Mint
+                                Color(red: 0.05, green: 0.85, blue: 1.00).opacity(0.60)  // Loop to Cyan
+                            ]),
+                            center: .center,
+                            angle: .degrees(viewState.glowAngle)
+                        )
+                    )
+                    .frame(width: 470, height: 490)
+                    .blur(radius: 45)
+                    .opacity(viewState.hasAppeared ? (isLight ? 0.35 : 0.70) : 0.0)
+                    .animation(.easeIn(duration: 0.35), value: viewState.hasAppeared)
+            }
+
+            // 3. The 100% Static & Grounded Rest Plaque (Zero card scaling/wobbling)
             VStack(spacing: 26) {
                 // Header badge: Frosted micro-capsule
                 HStack(spacing: 7) {
@@ -200,8 +221,8 @@ public struct BreakOverlayView: View {
                 x: 0,
                 y: isLight ? 12 : 18
             )
-            // 4.5s Box-Breathing organic scale
-            .scaleEffect(reduceMotion ? 1.0 : (viewState.hasAppeared ? viewState.breatheScale : 0.95))
+            // Grounded static card: only scales gently on entry, then remains 100% static
+            .scaleEffect(reduceMotion ? 1.0 : (viewState.hasAppeared ? 1.0 : 0.96))
             .opacity(viewState.hasAppeared ? 1.0 : 0.0)
             .animation(
                 reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.36, dampingFraction: 0.84),
