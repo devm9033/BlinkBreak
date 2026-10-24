@@ -14,9 +14,9 @@ public final class BlinkToastController {
         BlinkToastState.shared.stop()
         isAnimatingOut = false
 
-        let capsuleHeight: CGFloat = 40
-        let panelWidth: CGFloat = 320
-        let panelHeight: CGFloat = 76
+        let capsuleHeight: CGFloat = 38
+        let panelWidth: CGFloat = 260
+        let panelHeight: CGFloat = 64
 
         guard let screen = NSScreen.main else { return }
 
@@ -97,8 +97,8 @@ public final class BlinkToastController {
             return
         }
 
-        let panelWidth: CGFloat = 320
-        let panelHeight: CGFloat = 76
+        let panelWidth: CGFloat = 260
+        let panelHeight: CGFloat = 64
         let notchCenterX = screen.frame.midX
         let targetX = notchCenterX - (panelWidth / 2)
 

@@ -7,6 +7,13 @@ public final class BlinkToastState: ObservableObject {
     @Published public var remainingSeconds: Double = 5.0
     @Published public var totalSeconds: Double = 5.0
     @Published public var isVisible: Bool = false
+    @Published public var breatheScale: Double = 1.0
+    @Published public var waveOffset1: CGSize = .zero
+    @Published public var waveOffset2: CGSize = .zero
+    @Published public var waveAngle1: Double = 0.0
+    @Published public var waveAngle2: Double = 0.0
+
+    // Backward-compatible properties
     @Published public var glowIntensity: Double = 0.5
     @Published public var glowAngle: Double = 0.0
     @Published public var irisScale: Double = 1.0
@@ -19,6 +26,11 @@ public final class BlinkToastState: ObservableObject {
         remainingSeconds = duration
         totalSeconds = duration
         isVisible = true
+        breatheScale = 1.0
+        waveOffset1 = .zero
+        waveOffset2 = .zero
+        waveAngle1 = 0.0
+        waveAngle2 = 0.0
         glowIntensity = 0.5
         glowAngle = 0.0
         irisScale = 1.0
@@ -35,16 +47,30 @@ public final class BlinkToastState: ObservableObject {
                 elapsed += step
                 self.remainingSeconds = max(0, duration - elapsed)
 
-                // Smooth organic iris breathing
-                let irisWave = sin((elapsed / 1.5) * .pi * 2.0)
-                self.irisScale = (irisWave + 1.0) / 2.0
+                // Organic multi-axis fluid wave 1 (cyan + violet) - period ~7.0s
+                let t1 = elapsed / 3.5
+                self.waveOffset1 = CGSize(
+                    width: sin(t1 * .pi * 2.0) * 35.0,
+                    height: cos(t1 * .pi * 2.0 * 1.3) * 12.0
+                )
+                self.waveAngle1 = (elapsed * 45.0).truncatingRemainder(dividingBy: 360.0)
 
-                // Smooth sinusoidal breathing aura (normalized 0.0 ... 1.0)
-                let wave = sin((elapsed / 1.6) * .pi * 2.0)
-                self.glowIntensity = (wave + 1.0) / 2.0
+                // Organic multi-axis fluid wave 2 (mint + rose) - period ~8.5s
+                let t2 = elapsed / 4.25
+                self.waveOffset2 = CGSize(
+                    width: cos(t2 * .pi * 2.0 * 0.9) * -30.0,
+                    height: sin(t2 * .pi * 2.0 * 1.5) * 14.0
+                )
+                self.waveAngle2 = (elapsed * -38.0).truncatingRemainder(dividingBy: 360.0)
 
-                // Smooth rotational shimmer around the pill contour (72 deg/sec = full 360° over 5s)
-                self.glowAngle = (elapsed * 72.0).truncatingRemainder(dividingBy: 360.0)
+                // Whole-pill gentle breathing (period 3.2s, subtle 1.0 ... 1.035)
+                let breatheWave = sin((elapsed / 1.6) * .pi)
+                self.breatheScale = 1.0 + 0.035 * ((breatheWave + 1.0) / 2.0)
+
+                // Backward-compatible updates
+                self.glowIntensity = (breatheWave + 1.0) / 2.0
+                self.glowAngle = self.waveAngle1
+                self.irisScale = self.breatheScale
             }
 
             guard let self = self, !Task.isCancelled else { return }
@@ -76,134 +102,118 @@ public struct BlinkToastView: View {
         colorScheme == .light
     }
 
-    private var progress: Double {
-        guard state.totalSeconds > 0 else { return 0 }
-        return state.remainingSeconds / state.totalSeconds
-    }
-
-    private var effectiveGlow: Double {
-        if reduceMotion || !settings.ambientGlowEnabled {
-            return 0.5
-        }
-        return state.glowIntensity
-    }
-
     public var body: some View {
         ZStack(alignment: .center) {
-            HStack(spacing: 11) {
-                // Refined Apple Eye Glyph (Smooth Breathing Iris)
-                ZStack {
-                    Circle()
-                        .fill(Color.cyan.opacity(isLight ? 0.16 : 0.22))
-                        .frame(width: 28, height: 28)
-
-                    Image(systemName: "eye.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.cyan)
-                        .scaleEffect(reduceMotion ? 1.0 : (0.86 + 0.14 * state.irisScale))
-                }
-
-                // Direct, clear message (no wordy subtitles)
+            // Pure Borderless Liquid Glass Pill
+            HStack(spacing: 12) {
+                // Zen Typography: Just "Blink Eyes" (No timer, no eye icon)
                 Text("Blink Eyes")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundColor(isLight ? .primary : .white)
+                    .font(.system(size: 13.5, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .shadow(color: Color.black.opacity(0.40), radius: 1.5, x: 0, y: 1)
 
-                // Prominent, glanceable countdown timer ring
-                ZStack {
-                    Circle()
-                        .stroke(isLight ? Color.black.opacity(0.10) : Color.white.opacity(0.16), lineWidth: 2.8)
-                        .frame(width: 26, height: 26)
-
-                    Circle()
-                        .trim(from: 0, to: CGFloat(progress))
-                        .stroke(
-                            LinearGradient(colors: [.cyan, .mint], startPoint: .topLeading, endPoint: .bottomTrailing),
-                            style: StrokeStyle(lineWidth: 2.8, lineCap: .round)
-                        )
-                        .frame(width: 26, height: 26)
-                        .rotationEffect(.degrees(-90))
-
-                    Text("\(max(1, Int(ceil(state.remainingSeconds))))")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(isLight ? .primary : .white)
-                }
-                .padding(.leading, 2)
-
-                // Quick Dismiss Button
+                // Subtle Quick Dismiss ('x') Button
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
                         .font(.system(size: 9.5, weight: .bold))
-                        .foregroundColor(isLight ? Color.black.opacity(0.40) : Color.white.opacity(0.50))
-                        .padding(4)
+                        .foregroundColor(Color.white.opacity(0.65))
+                        .padding(5)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .help("Dismiss reminder")
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .frame(height: 40)
+            .padding(.leading, 18)
+            .padding(.trailing, 12)
+            .frame(height: 38)
             .background(
-                Capsule()
-                    .fill(isLight ? Color.white.opacity(0.96) : Color(red: 0.09, green: 0.10, blue: 0.13).opacity(0.97))
-                    .overlay(
-                        // Multi-color Apple Intelligence Illuminated Rim
-                        Capsule()
-                            .strokeBorder(
-                                settings.ambientGlowEnabled
-                                    ? AnyShapeStyle(
-                                        AngularGradient(
-                                            gradient: Gradient(colors: [
-                                                Color(red: 0.05, green: 0.85, blue: 1.00), // Electric Cyan
-                                                Color(red: 0.58, green: 0.38, blue: 0.98), // Royal Indigo
-                                                Color(red: 0.96, green: 0.32, blue: 0.68), // Apple Rose / Magenta
-                                                Color(red: 0.15, green: 0.88, blue: 0.62), // Radiant Mint
-                                                Color(red: 0.05, green: 0.85, blue: 1.00)  // Loop to Cyan
-                                            ]),
-                                            center: .center,
-                                            angle: .degrees(state.glowAngle)
-                                        )
-                                    )
-                                    : AnyShapeStyle(
-                                        isLight
-                                            ? LinearGradient(colors: [Color.black.opacity(0.12), Color.black.opacity(0.04)], startPoint: .top, endPoint: .bottom)
-                                            : LinearGradient(colors: [Color.white.opacity(0.28), Color.white.opacity(0.08)], startPoint: .top, endPoint: .bottom)
-                                    ),
-                                lineWidth: settings.ambientGlowEnabled ? 1.5 : 1.0
+                ZStack {
+                    // 1. Base Liquid Glass material
+                    Capsule()
+                        .fill(
+                            isLight
+                                ? Color(red: 0.12, green: 0.14, blue: 0.18).opacity(0.88)
+                                : Color(red: 0.06, green: 0.07, blue: 0.09).opacity(0.92)
+                        )
+
+                    // 2. INTERNAL FLUID LIGHT WAVE (Aurora Wave: Cyan, Violet, Mint, Rose)
+                    if settings.ambientGlowEnabled && !reduceMotion {
+                        ZStack {
+                            // Fluid Wave Blob 1: Cyan + Royal Violet
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 0.05, green: 0.85, blue: 1.00).opacity(0.70), // Electric Cyan
+                                    Color(red: 0.58, green: 0.38, blue: 0.98).opacity(0.60), // Royal Indigo / Violet
+                                    Color.clear
+                                ]),
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 55
                             )
-                    )
-                    .overlay(
-                        // Liquid Glass top specular highlight reflection
-                        Capsule()
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        isLight ? Color.white.opacity(0.70) : Color.white.opacity(0.25),
-                                        Color.clear
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .center
-                                ),
-                                lineWidth: 1.0
+                            .frame(width: 140, height: 60)
+                            .offset(state.waveOffset1)
+                            .rotationEffect(.degrees(state.waveAngle1))
+                            .blur(radius: 12)
+
+                            // Fluid Wave Blob 2: Radiant Mint + Apple Rose
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    Color(red: 0.15, green: 0.88, blue: 0.62).opacity(0.65), // Radiant Emerald Mint
+                                    Color(red: 0.96, green: 0.32, blue: 0.68).opacity(0.50), // Apple Rose / Magenta
+                                    Color.clear
+                                ]),
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 55
                             )
-                    )
-                    // Contained luminous glow (hugs rim perfectly with zero boxy window clipping)
-                    .shadow(
-                        color: settings.ambientGlowEnabled
-                            ? Color.cyan.opacity(isLight ? 0.30 : (0.35 + 0.15 * effectiveGlow))
-                            : Color.clear,
-                        radius: settings.ambientGlowEnabled ? CGFloat(9.0 + 3.0 * effectiveGlow) : 0,
-                        x: 0,
-                        y: 0
-                    )
-                    // Grounding elevation shadow
-                    .shadow(
-                        color: isLight ? Color.black.opacity(0.12) : Color.black.opacity(0.55),
-                        radius: isLight ? 4 : 8,
-                        x: 0,
-                        y: isLight ? 2 : 4
-                    )
+                            .frame(width: 140, height: 60)
+                            .offset(state.waveOffset2)
+                            .rotationEffect(.degrees(state.waveAngle2))
+                            .blur(radius: 14)
+                        }
+                        .clipShape(Capsule())
+                    }
+
+                    // 3. Top Specular Rim Reflection Highlight (Apple Liquid Glass)
+                    Capsule()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.40),
+                                    Color.white.opacity(0.08),
+                                    Color.clear
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1.0
+                        )
+
+                    // 4. Subtle Bottom Inner Shadow Edge for liquid glass depth
+                    Capsule()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    Color.clear,
+                                    Color.black.opacity(0.45)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1.0
+                        )
+                }
             )
+            .clipShape(Capsule())
+            // Natural elevation shadow (Zero boxy outer glow - strictly tight drop shadow)
+            .shadow(
+                color: Color.black.opacity(0.40),
+                radius: 6,
+                x: 0,
+                y: 3
+            )
+            // Whole-pill organic breathing scale
+            .scaleEffect(reduceMotion ? 1.0 : state.breatheScale)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
