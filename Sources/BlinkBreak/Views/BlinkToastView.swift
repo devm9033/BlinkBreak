@@ -6,10 +6,10 @@ public final class BlinkToastState: ObservableObject {
 
     @Published public var remainingSeconds: Double = 5.0
     @Published public var totalSeconds: Double = 5.0
-    @Published public var isEyeClosed: Bool = false
     @Published public var isVisible: Bool = false
     @Published public var glowIntensity: Double = 0.5
     @Published public var glowAngle: Double = 0.0
+    @Published public var irisScale: Double = 1.0
 
     private var countdownTask: Task<Void, Never>?
 
@@ -18,10 +18,10 @@ public final class BlinkToastState: ObservableObject {
     public func start(duration: Double = 5.0, onComplete: @escaping @MainActor () -> Void) {
         remainingSeconds = duration
         totalSeconds = duration
-        isEyeClosed = false
         isVisible = true
         glowIntensity = 0.5
         glowAngle = 0.0
+        irisScale = 1.0
 
         countdownTask?.cancel()
         countdownTask = Task { @MainActor [weak self] in
@@ -35,9 +35,9 @@ public final class BlinkToastState: ObservableObject {
                 elapsed += step
                 self.remainingSeconds = max(0, duration - elapsed)
 
-                // Organic blinking rhythm: closes for ~200ms every 0.9s
-                let cycleTime = elapsed.truncatingRemainder(dividingBy: 0.9)
-                self.isEyeClosed = (cycleTime < 0.22)
+                // Smooth organic iris breathing
+                let irisWave = sin((elapsed / 1.5) * .pi * 2.0)
+                self.irisScale = (irisWave + 1.0) / 2.0
 
                 // Smooth sinusoidal breathing aura (normalized 0.0 ... 1.0)
                 let wave = sin((elapsed / 1.6) * .pi * 2.0)
@@ -91,25 +91,17 @@ public struct BlinkToastView: View {
     public var body: some View {
         ZStack(alignment: .center) {
             HStack(spacing: 11) {
-                // Animated Eye Glyph
+                // Refined Apple Eye Glyph (Smooth Breathing Iris)
                 ZStack {
                     Circle()
-                        .fill(Color.cyan.opacity(isLight ? 0.16 : 0.24))
+                        .fill(Color.cyan.opacity(isLight ? 0.16 : 0.22))
                         .frame(width: 28, height: 28)
 
                     Image(systemName: "eye.fill")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.cyan)
-                        .opacity(state.isEyeClosed ? 0.0 : 1.0)
-                        .scaleEffect(state.isEyeClosed ? 0.85 : 1.0)
-
-                    Image(systemName: "eye.slash.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.cyan)
-                        .opacity(state.isEyeClosed ? 1.0 : 0.0)
-                        .scaleEffect(state.isEyeClosed ? 1.0 : 0.85)
+                        .scaleEffect(reduceMotion ? 1.0 : (0.86 + 0.14 * state.irisScale))
                 }
-                .animation(reduceMotion ? .none : .easeInOut(duration: 0.18), value: state.isEyeClosed)
 
                 // Direct, clear message (no wordy subtitles)
                 Text("Blink Eyes")
@@ -152,83 +144,65 @@ public struct BlinkToastView: View {
             .padding(.vertical, 6)
             .frame(height: 40)
             .background(
-                ZStack {
-                    if settings.ambientGlowEnabled {
-                        // Multi-color aura Layer 1: Wider soft halo hugging pill contour in 360°
+                Capsule()
+                    .fill(isLight ? Color.white.opacity(0.96) : Color(red: 0.09, green: 0.10, blue: 0.13).opacity(0.97))
+                    .overlay(
+                        // Multi-color Apple Intelligence Illuminated Rim
                         Capsule()
-                            .stroke(
-                                AngularGradient(
-                                    gradient: Gradient(colors: [
-                                        Color(red: 0.05, green: 0.85, blue: 1.00), // Electric Cyan
-                                        Color(red: 0.58, green: 0.38, blue: 0.98), // Royal Indigo
-                                        Color(red: 0.96, green: 0.32, blue: 0.68), // Apple Rose / Magenta
-                                        Color(red: 0.15, green: 0.88, blue: 0.62), // Radiant Mint
-                                        Color(red: 0.05, green: 0.85, blue: 1.00)  // Loop to Cyan
-                                    ]),
-                                    center: .center,
-                                    angle: .degrees(state.glowAngle)
-                                ),
-                                lineWidth: 8
-                            )
-                            .blur(radius: CGFloat(10.0 + 4.0 * effectiveGlow))
-                            .opacity(isLight ? 0.45 : (0.50 + 0.35 * effectiveGlow))
-
-                        // Multi-color aura Layer 2: Tight concentric contour halo
-                        Capsule()
-                            .stroke(
-                                AngularGradient(
-                                    gradient: Gradient(colors: [
-                                        Color(red: 0.05, green: 0.85, blue: 1.00),
-                                        Color(red: 0.58, green: 0.38, blue: 0.98),
-                                        Color(red: 0.96, green: 0.32, blue: 0.68),
-                                        Color(red: 0.15, green: 0.88, blue: 0.62),
-                                        Color(red: 0.05, green: 0.85, blue: 1.00)
-                                    ]),
-                                    center: .center,
-                                    angle: .degrees(state.glowAngle)
-                                ),
-                                lineWidth: 3.5
-                            )
-                            .blur(radius: CGFloat(4.0 + 2.0 * effectiveGlow))
-                            .opacity(isLight ? 0.70 : (0.75 + 0.25 * effectiveGlow))
-                    }
-
-                    // Main Capsule Solid Body
-                    Capsule()
-                        .fill(isLight ? Color.white.opacity(0.96) : Color(red: 0.11, green: 0.12, blue: 0.15).opacity(0.97))
-                        .overlay(
-                            Capsule()
-                                .strokeBorder(
-                                    settings.ambientGlowEnabled
-                                        ? AnyShapeStyle(
-                                            AngularGradient(
-                                                gradient: Gradient(colors: [
-                                                    Color(red: 0.20, green: 0.90, blue: 1.00),
-                                                    Color(red: 0.68, green: 0.48, blue: 1.00),
-                                                    Color(red: 1.00, green: 0.45, blue: 0.75),
-                                                    Color(red: 0.30, green: 0.95, blue: 0.70),
-                                                    Color(red: 0.20, green: 0.90, blue: 1.00)
-                                                ]),
-                                                center: .center,
-                                                angle: .degrees(state.glowAngle)
-                                            )
+                            .strokeBorder(
+                                settings.ambientGlowEnabled
+                                    ? AnyShapeStyle(
+                                        AngularGradient(
+                                            gradient: Gradient(colors: [
+                                                Color(red: 0.05, green: 0.85, blue: 1.00), // Electric Cyan
+                                                Color(red: 0.58, green: 0.38, blue: 0.98), // Royal Indigo
+                                                Color(red: 0.96, green: 0.32, blue: 0.68), // Apple Rose / Magenta
+                                                Color(red: 0.15, green: 0.88, blue: 0.62), // Radiant Mint
+                                                Color(red: 0.05, green: 0.85, blue: 1.00)  // Loop to Cyan
+                                            ]),
+                                            center: .center,
+                                            angle: .degrees(state.glowAngle)
                                         )
-                                        : AnyShapeStyle(
-                                            isLight
-                                                ? LinearGradient(colors: [Color.black.opacity(0.12), Color.black.opacity(0.04)], startPoint: .top, endPoint: .bottom)
-                                                : LinearGradient(colors: [Color.white.opacity(0.28), Color.white.opacity(0.08)], startPoint: .top, endPoint: .bottom)
-                                        ),
-                                    lineWidth: settings.ambientGlowEnabled ? 1.4 : 1.0
-                                )
-                        )
-                        // Clean physical grounding elevation shadow
-                        .shadow(
-                            color: isLight ? Color.black.opacity(0.12) : Color.black.opacity(0.50),
-                            radius: isLight ? 4 : 8,
-                            x: 0,
-                            y: isLight ? 2 : 3
-                        )
-                }
+                                    )
+                                    : AnyShapeStyle(
+                                        isLight
+                                            ? LinearGradient(colors: [Color.black.opacity(0.12), Color.black.opacity(0.04)], startPoint: .top, endPoint: .bottom)
+                                            : LinearGradient(colors: [Color.white.opacity(0.28), Color.white.opacity(0.08)], startPoint: .top, endPoint: .bottom)
+                                    ),
+                                lineWidth: settings.ambientGlowEnabled ? 1.5 : 1.0
+                            )
+                    )
+                    .overlay(
+                        // Liquid Glass top specular highlight reflection
+                        Capsule()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        isLight ? Color.white.opacity(0.70) : Color.white.opacity(0.25),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .center
+                                ),
+                                lineWidth: 1.0
+                            )
+                    )
+                    // Contained luminous glow (hugs rim perfectly with zero boxy window clipping)
+                    .shadow(
+                        color: settings.ambientGlowEnabled
+                            ? Color.cyan.opacity(isLight ? 0.30 : (0.35 + 0.15 * effectiveGlow))
+                            : Color.clear,
+                        radius: settings.ambientGlowEnabled ? CGFloat(9.0 + 3.0 * effectiveGlow) : 0,
+                        x: 0,
+                        y: 0
+                    )
+                    // Grounding elevation shadow
+                    .shadow(
+                        color: isLight ? Color.black.opacity(0.12) : Color.black.opacity(0.55),
+                        radius: isLight ? 4 : 8,
+                        x: 0,
+                        y: isLight ? 2 : 4
+                    )
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
