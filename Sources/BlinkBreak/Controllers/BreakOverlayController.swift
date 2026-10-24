@@ -52,6 +52,7 @@ public final class BreakOverlayController {
             window.backgroundColor = .clear
             window.hasShadow = false
             window.ignoresMouseEvents = false
+            window.acceptsMouseMovedEvents = true
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
             let contentView = BreakOverlayView(

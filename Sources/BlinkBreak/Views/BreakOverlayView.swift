@@ -32,7 +32,7 @@ public final class BreakOverlayViewState: ObservableObject {
 
                 elapsed += step
 
-                // Slow, peaceful rotational sweep around the window perimeter (~14.4s full revolution)
+                // Slow, peaceful rotational sweep around the window perimeter (~14s full revolution)
                 self.glowAngle = (elapsed * 25.0).truncatingRemainder(dividingBy: 360.0)
             }
         }
@@ -70,30 +70,30 @@ public struct BreakOverlayView: View {
                 .background(.ultraThinMaterial)
                 .ignoresSafeArea()
 
-            // 2. Ambient Softly Moving Light Halo (BEHIND the window perimeter — 360° infinite diffusion)
+            // 2. Luminous Ambient Light Halo (BEHIND the window perimeter — 360° infinite diffusion)
             if settings.ambientGlowEnabled && !reduceMotion {
                 RoundedRectangle(cornerRadius: 48, style: .continuous)
                     .fill(
                         AngularGradient(
                             gradient: Gradient(colors: [
-                                Color(red: 0.05, green: 0.85, blue: 1.00).opacity(0.60), // Electric Cyan
-                                Color(red: 0.58, green: 0.38, blue: 0.98).opacity(0.50), // Royal Indigo
-                                Color(red: 0.96, green: 0.32, blue: 0.68).opacity(0.40), // Apple Rose / Magenta
-                                Color(red: 0.15, green: 0.88, blue: 0.62).opacity(0.55), // Emerald Mint
-                                Color(red: 0.05, green: 0.85, blue: 1.00).opacity(0.60)  // Loop to Cyan
+                                Color(red: 0.05, green: 0.85, blue: 1.00).opacity(0.85), // Electric Cyan
+                                Color(red: 0.58, green: 0.38, blue: 0.98).opacity(0.80), // Royal Indigo
+                                Color(red: 0.96, green: 0.30, blue: 0.65).opacity(0.75), // Apple Rose / Magenta
+                                Color(red: 0.15, green: 0.92, blue: 0.65).opacity(0.80), // Radiant Mint
+                                Color(red: 0.05, green: 0.85, blue: 1.00).opacity(0.85)  // Loop to Cyan
                             ]),
                             center: .center,
                             angle: .degrees(viewState.glowAngle)
                         )
                     )
-                    .frame(width: 470, height: 490)
-                    .blur(radius: 45)
-                    .opacity(viewState.hasAppeared ? (isLight ? 0.35 : 0.70) : 0.0)
+                    .frame(width: 440, height: 450)
+                    .blur(radius: 40)
+                    .opacity(viewState.hasAppeared ? (isLight ? 0.45 : 0.85) : 0.0)
                     .animation(.easeIn(duration: 0.35), value: viewState.hasAppeared)
             }
 
             // 3. The 100% Static & Grounded Rest Plaque (Zero card scaling/wobbling)
-            VStack(spacing: 26) {
+            VStack(spacing: 24) {
                 // Header badge: Frosted micro-capsule
                 HStack(spacing: 7) {
                     Circle()
@@ -153,22 +153,13 @@ public struct BreakOverlayView: View {
                     }
                 }
 
-                // Guidance text with high contrast
-                VStack(spacing: 8) {
-                    Text("Look 20 feet away")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
-                        .tracking(-0.4)
-                        .foregroundColor(isLight ? .primary : .white)
+                // Direct, clear message (no wordy subtitles)
+                Text("Look 20 feet away")
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .tracking(-0.4)
+                    .foregroundColor(isLight ? .primary : .white)
 
-                    Text("Shift your focus to a distant object across the room or outside a window.\nBlink softly and relax your facial muscles.")
-                        .font(.system(size: 14, weight: .regular))
-                        .lineSpacing(3)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(isLight ? .secondary : .white.opacity(0.85))
-                        .frame(maxWidth: 420)
-                }
-
-                // Frosted Action Buttons
+                // Frosted Action Buttons with tactile hover and press haptics
                 HStack(spacing: 16) {
                     Button(action: {
                         HapticManager.shared.buttonClick()
@@ -180,6 +171,11 @@ public struct BreakOverlayView: View {
                         }
                     }
                     .buttonStyle(AppleTactileButtonStyle(isDestructive: false))
+                    .onHover { isHovered in
+                        if isHovered {
+                            HapticManager.shared.pillHover()
+                        }
+                    }
 
                     Button(action: {
                         HapticManager.shared.dismissClick()
@@ -191,10 +187,16 @@ public struct BreakOverlayView: View {
                         }
                     }
                     .buttonStyle(AppleTactileButtonStyle(isDestructive: true))
+                    .onHover { isHovered in
+                        if isHovered {
+                            HapticManager.shared.pillHover()
+                        }
+                    }
                 }
                 .padding(.top, 4)
             }
-            .padding(38)
+            .padding(.horizontal, 38)
+            .padding(.vertical, 34)
             .background(
                 // Pure, seamless frosted glass card — zero boxy gradient cutoff, zero glare refraction
                 RoundedRectangle(cornerRadius: 32, style: .continuous)
@@ -228,6 +230,11 @@ public struct BreakOverlayView: View {
                 reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.36, dampingFraction: 0.84),
                 value: viewState.hasAppeared
             )
+            .onHover { isHovered in
+                if isHovered {
+                    HapticManager.shared.pillHover()
+                }
+            }
         }
         .onAppear {
             BreakOverlayViewState.shared.appear()
