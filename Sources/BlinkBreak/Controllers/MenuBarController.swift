@@ -45,7 +45,13 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
         }
 
         manager.onBlinkTriggered = {
-            BlinkToastController.shared.show()
+            if AppSettings.shared.ambientGlowEnabled {
+                BlinkScreenEffectController.shared.showEffect {
+                    BlinkToastController.shared.show()
+                }
+            } else {
+                BlinkToastController.shared.show()
+            }
         }
 
         manager.onTick = { [weak self] in

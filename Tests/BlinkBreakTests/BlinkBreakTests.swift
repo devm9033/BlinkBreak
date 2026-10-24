@@ -89,6 +89,16 @@ struct BlinkBreakTests {
         #expect(manager.timeUntilBlink == AppSettings.shared.blinkIntervalMinutes * 60)
     }
 
+    @Test("BlinkScreenEffectState starts and resets cleanly")
+    func blinkScreenEffectState() {
+        let state = BlinkScreenEffectState.shared
+        state.reset()
+        #expect(state.progress == 0.0)
+        #expect(state.isRunning == false)
+        #expect(state.washOpacity == 0.0)
+        #expect(state.ringOpacity == 0.0)
+    }
+
     @Test("Video playback detection pauses break timer but NOT blink reminder")
     func videoPlaybackPausesBreakTimerOnly() {
         let manager = BreakManager.shared
