@@ -5,10 +5,6 @@ public final class BreakOverlayViewState: ObservableObject {
     public static let shared = BreakOverlayViewState()
 
     @Published public var hasAppeared: Bool = false
-    @Published public var waveOffset1: CGSize = .zero
-    @Published public var waveOffset2: CGSize = .zero
-    @Published public var waveAngle1: Double = 0.0
-    @Published public var waveAngle2: Double = 0.0
     @Published public var breatheScale: Double = 1.0
 
     private var animationTask: Task<Void, Never>?
@@ -24,10 +20,6 @@ public final class BreakOverlayViewState: ObservableObject {
     public func appear() {
         hasAppeared = true
         breatheScale = 1.0
-        waveOffset1 = .zero
-        waveOffset2 = .zero
-        waveAngle1 = 0.0
-        waveAngle2 = 0.0
 
         animationTask?.cancel()
         animationTask = Task { @MainActor [weak self] in
@@ -40,23 +32,7 @@ public final class BreakOverlayViewState: ObservableObject {
 
                 elapsed += step
 
-                // Gentle slow aurora wave 1 (cyan + violet) - period ~12s
-                let t1 = elapsed / 6.0
-                self.waveOffset1 = CGSize(
-                    width: sin(t1 * .pi * 2.0) * 45.0,
-                    height: cos(t1 * .pi * 2.0 * 1.2) * 20.0
-                )
-                self.waveAngle1 = (elapsed * 24.0).truncatingRemainder(dividingBy: 360.0)
-
-                // Gentle slow aurora wave 2 (mint + rose) - period ~15s
-                let t2 = elapsed / 7.5
-                self.waveOffset2 = CGSize(
-                    width: cos(t2 * .pi * 2.0 * 0.9) * -40.0,
-                    height: sin(t2 * .pi * 2.0 * 1.3) * 25.0
-                )
-                self.waveAngle2 = (elapsed * -18.0).truncatingRemainder(dividingBy: 360.0)
-
-                // 4.5s box-breathing cycle (subtle scale 1.0 ... 1.025)
+                // 4.5s box-breathing cycle (calm, organic scale 1.0 ... 1.025)
                 let breatheWave = sin((elapsed / 2.25) * .pi)
                 self.breatheScale = 1.0 + 0.025 * ((breatheWave + 1.0) / 2.0)
             }
@@ -95,7 +71,7 @@ public struct BreakOverlayView: View {
                 .background(.ultraThinMaterial)
                 .ignoresSafeArea()
 
-            // The Floating Liquid Glass Plaque
+            // The Floating Apple Rest Plaque
             VStack(spacing: 26) {
                 // Header badge: Frosted micro-capsule
                 HStack(spacing: 7) {
@@ -118,7 +94,7 @@ public struct BreakOverlayView: View {
                         )
                 )
 
-                // Circular Progress Ring (Apple Fitness-style luminous arc)
+                // Circular Progress Ring (Clean luminous gradient arc — no boxy clipping)
                 ZStack {
                     Circle()
                         .stroke(isLight ? Color.black.opacity(0.08) : Color.white.opacity(0.12), lineWidth: 8)
@@ -129,9 +105,9 @@ public struct BreakOverlayView: View {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 0.05, green: 0.85, blue: 1.00), // Electric Cyan
-                                    Color(red: 0.58, green: 0.38, blue: 0.98), // Royal Indigo
-                                    Color(red: 0.15, green: 0.88, blue: 0.62)  // Emerald Mint
+                                    Color(red: 0.10, green: 0.85, blue: 1.00), // Electric Cyan
+                                    Color(red: 0.45, green: 0.60, blue: 1.00), // Calm Royal Blue
+                                    Color(red: 0.20, green: 0.88, blue: 0.70)  // Soft Mint
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -141,7 +117,7 @@ public struct BreakOverlayView: View {
                         .frame(width: 170, height: 170)
                         .rotationEffect(.degrees(-90))
                         .animation(reduceMotion ? .none : .linear(duration: 1.0), value: progress)
-                        .shadow(color: Color.cyan.opacity(0.40), radius: 6, x: 0, y: 0)
+                        .shadow(color: Color.cyan.opacity(0.35), radius: 8, x: 0, y: 0)
 
                     VStack(spacing: 2) {
                         Text("\(breakManager.breakRemainingSeconds)")
@@ -199,87 +175,30 @@ public struct BreakOverlayView: View {
             }
             .padding(38)
             .background(
-                ZStack {
-                    // Base Glass fill
-                    RoundedRectangle(cornerRadius: 32, style: .continuous)
-                        .fill(
-                            isLight
-                                ? Color(red: 0.98, green: 0.98, blue: 1.00).opacity(0.88)
-                                : Color(red: 0.08, green: 0.10, blue: 0.13).opacity(0.86)
-                        )
-
-                    // Internal Soothing Aurora Waves
-                    if settings.ambientGlowEnabled && !reduceMotion {
-                        ZStack {
-                            RadialGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 0.05, green: 0.85, blue: 1.00).opacity(0.35),
-                                    Color(red: 0.58, green: 0.38, blue: 0.98).opacity(0.25),
-                                    Color.clear
-                                ]),
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 180
+                // Pure, seamless frosted glass card — zero boxy gradient cutoff, zero glare refraction
+                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                    .fill(
+                        isLight
+                            ? Color(red: 0.98, green: 0.98, blue: 1.00).opacity(0.92)
+                            : Color(red: 0.09, green: 0.10, blue: 0.13).opacity(0.94)
+                    )
+                    .overlay(
+                        // Quiet, seamless uniform Apple hairline border
+                        RoundedRectangle(cornerRadius: 32, style: .continuous)
+                            .stroke(
+                                isLight
+                                    ? Color.black.opacity(0.08)
+                                    : Color.white.opacity(0.12),
+                                lineWidth: 1.0
                             )
-                            .frame(width: 440, height: 320)
-                            .offset(viewState.waveOffset1)
-                            .rotationEffect(.degrees(viewState.waveAngle1))
-                            .blur(radius: 40)
-
-                            RadialGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 0.15, green: 0.88, blue: 0.62).opacity(0.30),
-                                    Color(red: 0.96, green: 0.32, blue: 0.68).opacity(0.18),
-                                    Color.clear
-                                ]),
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 180
-                            )
-                            .frame(width: 440, height: 320)
-                            .offset(viewState.waveOffset2)
-                            .rotationEffect(.degrees(viewState.waveAngle2))
-                            .blur(radius: 45)
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-                    }
-
-                    // Top Specular Rim Reflection Highlight (Liquid Glass)
-                    RoundedRectangle(cornerRadius: 32, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    isLight ? Color.white.opacity(0.85) : Color.white.opacity(0.40),
-                                    Color.white.opacity(0.08),
-                                    Color.clear
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ),
-                            lineWidth: 1.0
-                        )
-
-                    // Subtle Bottom Edge Shadow
-                    RoundedRectangle(cornerRadius: 32, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    Color.clear,
-                                    Color.black.opacity(isLight ? 0.08 : 0.45)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ),
-                            lineWidth: 1.0
-                        )
-                }
+                    )
             )
             .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
             .shadow(
-                color: Color.black.opacity(isLight ? 0.20 : 0.60),
-                radius: isLight ? 28 : 44,
+                color: isLight ? Color.black.opacity(0.18) : Color.black.opacity(0.55),
+                radius: isLight ? 28 : 40,
                 x: 0,
-                y: isLight ? 12 : 20
+                y: isLight ? 12 : 18
             )
             // 4.5s Box-Breathing organic scale
             .scaleEffect(reduceMotion ? 1.0 : (viewState.hasAppeared ? viewState.breatheScale : 0.95))
