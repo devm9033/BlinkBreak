@@ -17,12 +17,14 @@ public final class SettingsWindowController {
         }
 
         let newWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 450, height: 530),
-            styleMask: [.titled, .closable, .miniaturizable],
+            contentRect: NSRect(x: 0, y: 0, width: 460, height: 580),
+            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         newWindow.title = "BlinkBreak Preferences"
+        newWindow.titlebarAppearsTransparent = true
+        newWindow.titleVisibility = .hidden
         newWindow.center()
         newWindow.isReleasedWhenClosed = false
         newWindow.contentView = NSHostingView(rootView: SettingsView())

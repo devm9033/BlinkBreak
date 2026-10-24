@@ -20,7 +20,7 @@ public struct AppleTactileButtonStyle: ButtonStyle {
                 if isLight {
                     return Color.red.opacity(isPressed ? 0.22 : 0.12)
                 } else {
-                    return Color.red.opacity(isPressed ? 0.45 : 0.30)
+                    return Color.red.opacity(isPressed ? 0.32 : 0.18)
                 }
             } else {
                 if isLight {
@@ -33,17 +33,17 @@ public struct AppleTactileButtonStyle: ButtonStyle {
 
         let textColor: Color = {
             if isDestructive {
-                return isLight ? Color.red : Color.white
+                return isLight ? Color.red : Color(red: 1.0, green: 0.65, blue: 0.65)
             } else {
                 return isLight ? Color.primary : Color.white
             }
         }()
 
         let borderColor: Color = {
-            if isLight {
-                return Color.black.opacity(isPressed ? 0.15 : 0.08)
+            if isDestructive {
+                return isLight ? Color.red.opacity(0.25) : Color.red.opacity(0.35)
             } else {
-                return Color.white.opacity(isPressed ? 0.25 : 0.12)
+                return isLight ? Color.black.opacity(0.10) : Color.white.opacity(0.20)
             }
         }()
 
@@ -53,15 +53,26 @@ public struct AppleTactileButtonStyle: ButtonStyle {
             .padding(.horizontal, 18)
             .padding(.vertical, 9)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                Capsule()
                     .fill(backgroundFill)
+                    .overlay(
+                        // Top specular hairline highlight
+                        Capsule()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        isLight ? Color.white.opacity(0.60) : Color.white.opacity(0.30),
+                                        borderColor
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 1
+                            )
+                    )
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(borderColor, lineWidth: 1)
-            )
-            .scaleEffect(isPressed ? 0.96 : 1.0)
-            .opacity(isPressed ? 0.88 : 1.0)
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .opacity(isPressed ? 0.85 : 1.0)
             .animation(.easeOut(duration: 0.12), value: isPressed)
     }
 }

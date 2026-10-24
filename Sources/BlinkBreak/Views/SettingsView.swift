@@ -14,30 +14,47 @@ public struct SettingsView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            // Header: Clean app identity
+            // Hero Header: Modern Liquid Glass identity with unified title bar spacing
             HStack(spacing: 14) {
                 ZStack {
-                    Circle()
-                        .fill(Color.cyan.opacity(isLight ? 0.15 : 0.22))
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.cyan,
+                                    Color(red: 0.58, green: 0.38, blue: 0.98)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                         .frame(width: 44, height: 44)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
+                        )
+                        .shadow(color: Color.cyan.opacity(0.35), radius: 8, x: 0, y: 3)
 
                     Image(systemName: "eye.fill")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.cyan)
+                        .font(.system(size: 21, weight: .bold))
+                        .foregroundColor(.white)
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 8) {
                         Text("BlinkBreak")
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
 
-                        Text("v2.0")
+                        Text("v2.1 Liquid Glass")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.secondary.opacity(0.12))
+                            .foregroundColor(.cyan)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2.5)
+                            .background(Color.cyan.opacity(0.14))
+                            .overlay(
+                                Capsule().strokeBorder(Color.cyan.opacity(0.30), lineWidth: 0.5)
+                            )
                             .clipShape(Capsule())
                     }
 
@@ -48,15 +65,15 @@ public struct SettingsView: View {
 
                 Spacer()
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
+            .padding(.horizontal, 22)
+            .padding(.top, 28) // Breathing room below traffic lights
             .padding(.bottom, 16)
 
-            // Content: Grouped cards
+            // Content: Grouped Frosted Glass Cards
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 14) {
 
-                    // Section 1: Break Reminder
+                    // Section 1: Break Reminder (Look Away)
                     VStack(alignment: .leading, spacing: 14) {
                         HStack(spacing: 8) {
                             Image(systemName: "figure.walk")
@@ -127,7 +144,7 @@ public struct SettingsView: View {
                             }
                         }
 
-                        Divider().opacity(0.6)
+                        Divider().opacity(0.5)
 
                         // Duration slider with haptics
                         HStack {
@@ -159,21 +176,31 @@ public struct SettingsView: View {
                     }
                     .padding(16)
                     .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(nsColor: .controlBackgroundColor))
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isLight ? Color.white.opacity(0.70) : Color.white.opacity(0.05))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(
+                                        LinearGradient(
+                                            colors: [
+                                                isLight ? Color.white.opacity(0.90) : Color.white.opacity(0.14),
+                                                isLight ? Color.black.opacity(0.04) : Color.white.opacity(0.04)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        ),
+                                        lineWidth: 1
+                                    )
                             )
                     )
 
-                    // Section 2: Blink Reminder
+                    // Section 2: Blink Reminder (Notch Micro-Capsule)
                     VStack(alignment: .leading, spacing: 14) {
                         HStack(spacing: 8) {
                             Image(systemName: "eye")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.cyan)
-                            Text("Blink Reminder (Micro-Nudge)")
+                            Text("Blink Reminder (Notch Capsule)")
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
                                 .foregroundColor(.primary)
                         }
@@ -205,15 +232,15 @@ public struct SettingsView: View {
                                 .frame(width: 58, alignment: .trailing)
                         }
 
-                        Divider().opacity(0.6)
+                        Divider().opacity(0.5)
 
-                        // Ambient glow toggle
+                        // Ambient Aurora Glow toggle
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Ambient Luminous Glow")
+                                Text("Internal Aurora Fluid Wave")
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundColor(.primary)
-                                Text("Diffused cyan aura around capsule to catch peripheral attention")
+                                Text("Multi-color silk wave shifting organically inside the liquid glass pill")
                                     .font(.system(size: 10.5))
                                     .foregroundColor(.secondary)
                             }
@@ -230,11 +257,21 @@ public struct SettingsView: View {
                     }
                     .padding(16)
                     .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(nsColor: .controlBackgroundColor))
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isLight ? Color.white.opacity(0.70) : Color.white.opacity(0.05))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(
+                                        LinearGradient(
+                                            colors: [
+                                                isLight ? Color.white.opacity(0.90) : Color.white.opacity(0.14),
+                                                isLight ? Color.black.opacity(0.04) : Color.white.opacity(0.04)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        ),
+                                        lineWidth: 1
+                                    )
                             )
                     )
 
@@ -255,7 +292,7 @@ public struct SettingsView: View {
                             .foregroundColor(.secondary)
                             .lineSpacing(2)
 
-                        Divider().opacity(0.6)
+                        Divider().opacity(0.5)
 
                         // Option 1: Pause Break Timer
                         HStack {
@@ -299,7 +336,7 @@ public struct SettingsView: View {
                                 }
                         }
 
-                        Divider().opacity(0.6)
+                        Divider().opacity(0.5)
 
                         // Live status indicator
                         HStack(spacing: 7) {
@@ -325,15 +362,25 @@ public struct SettingsView: View {
                     }
                     .padding(16)
                     .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(nsColor: .controlBackgroundColor))
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isLight ? Color.white.opacity(0.70) : Color.white.opacity(0.05))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(
+                                        LinearGradient(
+                                            colors: [
+                                                isLight ? Color.white.opacity(0.90) : Color.white.opacity(0.14),
+                                                isLight ? Color.black.opacity(0.04) : Color.white.opacity(0.04)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        ),
+                                        lineWidth: 1
+                                    )
                             )
                     )
 
-                    // Section 4: Native Sound Alerts
+                    // Section 4: Notification Sounds
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             HStack(spacing: 8) {
@@ -356,7 +403,7 @@ public struct SettingsView: View {
                         }
 
                         if settings.soundEnabled {
-                            Divider().opacity(0.6)
+                            Divider().opacity(0.5)
 
                             // Blink sound picker
                             HStack {
@@ -423,15 +470,25 @@ public struct SettingsView: View {
                     }
                     .padding(16)
                     .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(nsColor: .controlBackgroundColor))
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isLight ? Color.white.opacity(0.70) : Color.white.opacity(0.05))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(
+                                        LinearGradient(
+                                            colors: [
+                                                isLight ? Color.white.opacity(0.90) : Color.white.opacity(0.14),
+                                                isLight ? Color.black.opacity(0.04) : Color.white.opacity(0.04)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        ),
+                                        lineWidth: 1
+                                    )
                             )
                     )
 
-                    // Section 4: Live Tests
+                    // Section 5: Live Test Controls
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 12) {
                             Button {
@@ -443,9 +500,15 @@ public struct SettingsView: View {
                                     Text("Test Break Screen")
                                 }
                                 .font(.system(size: 12, weight: .medium))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .background(
+                                    Capsule()
+                                        .fill(isLight ? Color.black.opacity(0.06) : Color.white.opacity(0.10))
+                                        .overlay(Capsule().strokeBorder(isLight ? Color.black.opacity(0.08) : Color.white.opacity(0.15), lineWidth: 0.5))
+                                )
                             }
+                            .buttonStyle(.plain)
 
                             Button {
                                 HapticManager.shared.buttonClick()
@@ -456,28 +519,47 @@ public struct SettingsView: View {
                                     Text("Test Blink Nudge")
                                 }
                                 .font(.system(size: 12, weight: .medium))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .background(
+                                    Capsule()
+                                        .fill(isLight ? Color.black.opacity(0.06) : Color.white.opacity(0.10))
+                                        .overlay(Capsule().strokeBorder(isLight ? Color.black.opacity(0.08) : Color.white.opacity(0.15), lineWidth: 0.5))
+                                )
                             }
+                            .buttonStyle(.plain)
 
                             Spacer()
                         }
                     }
                     .padding(14)
                     .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(nsColor: .controlBackgroundColor))
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isLight ? Color.white.opacity(0.70) : Color.white.opacity(0.05))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(
+                                        LinearGradient(
+                                            colors: [
+                                                isLight ? Color.white.opacity(0.90) : Color.white.opacity(0.14),
+                                                isLight ? Color.black.opacity(0.04) : Color.white.opacity(0.04)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        ),
+                                        lineWidth: 1
+                                    )
                             )
                     )
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .padding(.bottom, 22)
             }
         }
-        .frame(width: 460, height: 600)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(width: 460, height: 580)
+        .background(
+            Color(nsColor: .windowBackgroundColor)
+                .background(.ultraThinMaterial)
+        )
     }
 }
