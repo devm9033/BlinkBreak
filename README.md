@@ -52,7 +52,7 @@ Staring at screens reduces your natural blink rate by up to 66%, leading to dry,
 ## Download & Installation
 
 ### Option 1: Direct Download (Prebuilt)
-1. Download **`BlinkBreak-macOS.zip`** from the [Releases](https://github.com/dev9033/BlinkBreak/releases) page.
+1. Download **`BlinkBreak-macOS.zip`** from the [Releases](https://github.com/devm9033/BlinkBreak/releases) page.
 2. Unzip the archive and drag **`BlinkBreak.app`** into your **`/Applications`** folder.
 3. Open **BlinkBreak** from Launchpad or Spotlight (`⌘ Space`).
 
@@ -75,7 +75,7 @@ Requirements: Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/dev9033/BlinkBreak.git
+git clone https://github.com/devm9033/BlinkBreak.git
 cd BlinkBreak
 
 # 2. Build and package release application
