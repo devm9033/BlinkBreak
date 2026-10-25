@@ -1,9 +1,22 @@
+# macOS System Files
 .DS_Store
-/.build
-/build
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Build Artifacts & SwiftPM
+/.build/
+/build/
 /Packages
 xcuserdata/
 DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+
+# Credentials & Local Configuration
+.env
+.env.*
 .netrc
