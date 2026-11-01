@@ -93,50 +93,80 @@ public struct BlinkScreenEffectView: View {
         GeometryReader { geometry in
             ZStack {
                 if !reduceMotion {
-                    // Deep diffused edge halo (Apple Intelligence style ambient perimeter light)
-                    // The center of the screen is 100% empty and transparent!
-                    Rectangle()
-                        .strokeBorder(
-                            AngularGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 0.05, green: 0.85, blue: 1.00), // Electric Cyan
-                                    Color(red: 0.58, green: 0.38, blue: 0.98), // Royal Indigo
-                                    Color(red: 0.96, green: 0.30, blue: 0.65), // Apple Rose
-                                    Color(red: 0.15, green: 0.92, blue: 0.65), // Radiant Mint
-                                    Color(red: 0.05, green: 0.85, blue: 1.00)  // Loop to Cyan
-                                ]),
-                                center: .center
-                            ),
-                            lineWidth: 26.0
-                        )
-                        .blur(radius: 28.0)
-                        .opacity(state.glowOpacity * (isLight ? 0.40 : 0.60))
+                    if isLight {
+                        // Light Mode: Smoked Obsidian Vignette (Apple optical aperture depth)
+                        // Uses subtractive exposure contrast against bright white displays
+                        // 1. Deep outer perimeter falloff
+                        Rectangle()
+                            .strokeBorder(
+                                Color(red: 0.03, green: 0.04, blue: 0.07).opacity(0.34),
+                                lineWidth: 42.0
+                            )
+                            .blur(radius: 34.0)
+                            .opacity(state.glowOpacity)
 
-                    // Medium edge rim for crisp gradient definition along the screen bezels
-                    Rectangle()
-                        .strokeBorder(
-                            AngularGradient(
-                                gradient: Gradient(colors: [
-                                    Color(red: 0.05, green: 0.85, blue: 1.00),
-                                    Color(red: 0.58, green: 0.38, blue: 0.98),
-                                    Color(red: 0.96, green: 0.30, blue: 0.65),
-                                    Color(red: 0.15, green: 0.92, blue: 0.65),
-                                    Color(red: 0.05, green: 0.85, blue: 1.00)
-                                ]),
-                                center: .center
-                            ),
-                            lineWidth: 5.0
-                        )
-                        .blur(radius: 6.0)
-                        .opacity(state.glowOpacity * (isLight ? 0.35 : 0.50))
+                        // 2. Secondary soft extended gradient (smooth lens vignetting)
+                        Rectangle()
+                            .strokeBorder(
+                                Color(red: 0.08, green: 0.10, blue: 0.14).opacity(0.18),
+                                lineWidth: 84.0
+                            )
+                            .blur(radius: 56.0)
+                            .opacity(state.glowOpacity)
 
-                    // Subtle specular bezel highlight line
-                    Rectangle()
-                        .strokeBorder(
-                            Color.white.opacity(isLight ? 0.20 : 0.35),
-                            lineWidth: 1.0
-                        )
-                        .opacity(state.glowOpacity * 0.65)
+                        // 3. Subtle graphite bezel contour line
+                        Rectangle()
+                            .strokeBorder(
+                                Color.black.opacity(0.22),
+                                lineWidth: 1.5
+                            )
+                            .opacity(state.glowOpacity)
+                    } else {
+                        // Dark Mode: Apple Intelligence Luminous Aurora Halo
+                        // Electric Cyan, Royal Indigo, Apple Rose, Radiant Mint
+                        Rectangle()
+                            .strokeBorder(
+                                AngularGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(red: 0.05, green: 0.85, blue: 1.00), // Electric Cyan
+                                        Color(red: 0.58, green: 0.38, blue: 0.98), // Royal Indigo
+                                        Color(red: 0.96, green: 0.30, blue: 0.65), // Apple Rose
+                                        Color(red: 0.15, green: 0.92, blue: 0.65), // Radiant Mint
+                                        Color(red: 0.05, green: 0.85, blue: 1.00)  // Loop to Cyan
+                                    ]),
+                                    center: .center
+                                ),
+                                lineWidth: 26.0
+                            )
+                            .blur(radius: 28.0)
+                            .opacity(state.glowOpacity * 0.60)
+
+                        // Medium edge rim for crisp gradient definition along the screen bezels
+                        Rectangle()
+                            .strokeBorder(
+                                AngularGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(red: 0.05, green: 0.85, blue: 1.00),
+                                        Color(red: 0.58, green: 0.38, blue: 0.98),
+                                        Color(red: 0.96, green: 0.30, blue: 0.65),
+                                        Color(red: 0.15, green: 0.92, blue: 0.65),
+                                        Color(red: 0.05, green: 0.85, blue: 1.00)
+                                    ]),
+                                    center: .center
+                                ),
+                                lineWidth: 5.0
+                            )
+                            .blur(radius: 6.0)
+                            .opacity(state.glowOpacity * 0.50)
+
+                        // Subtle specular bezel highlight line
+                        Rectangle()
+                            .strokeBorder(
+                                Color.white.opacity(0.35),
+                                lineWidth: 1.0
+                            )
+                            .opacity(state.glowOpacity * 0.65)
+                    }
                 }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
