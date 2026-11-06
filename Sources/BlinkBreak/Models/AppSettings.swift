@@ -6,15 +6,32 @@ public final class AppSettings: ObservableObject {
     public static let shared = AppSettings()
 
     private enum Keys {
+        static let isBreakEnabled = "isBreakEnabled"
+        static let isBlinkEnabled = "isBlinkEnabled"
         static let breakIntervalMinutes = "breakIntervalMinutes"
         static let breakDurationSeconds = "breakDurationSeconds"
         static let blinkIntervalMinutes = "blinkIntervalMinutes"
+        static let blinkDurationSeconds = "blinkDurationSeconds"
         static let soundEnabled = "soundEnabled"
         static let blinkSoundName = "blinkSoundName"
         static let breakSoundName = "breakSoundName"
         static let pauseBreaksDuringVideo = "pauseBreaksDuringVideo"
         static let pauseBlinksDuringVideo = "pauseBlinksDuringVideo"
         static let ambientGlowEnabled = "ambientGlowEnabled"
+    }
+
+    @Published public var isBreakEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isBreakEnabled, forKey: Keys.isBreakEnabled)
+            onSettingsChanged?()
+        }
+    }
+
+    @Published public var isBlinkEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isBlinkEnabled, forKey: Keys.isBlinkEnabled)
+            onSettingsChanged?()
+        }
     }
 
     @Published public var breakIntervalMinutes: Int {
@@ -34,6 +51,13 @@ public final class AppSettings: ObservableObject {
     @Published public var blinkIntervalMinutes: Int {
         didSet {
             UserDefaults.standard.set(blinkIntervalMinutes, forKey: Keys.blinkIntervalMinutes)
+            onSettingsChanged?()
+        }
+    }
+
+    @Published public var blinkDurationSeconds: Int {
+        didSet {
+            UserDefaults.standard.set(blinkDurationSeconds, forKey: Keys.blinkDurationSeconds)
             onSettingsChanged?()
         }
     }
@@ -86,9 +110,12 @@ public final class AppSettings: ObservableObject {
         let defaults = UserDefaults.standard
         
         defaults.register(defaults: [
+            Keys.isBreakEnabled: true,
+            Keys.isBlinkEnabled: true,
             Keys.breakIntervalMinutes: 20,
             Keys.breakDurationSeconds: 20,
             Keys.blinkIntervalMinutes: 5,
+            Keys.blinkDurationSeconds: 5,
             Keys.soundEnabled: true,
             Keys.blinkSoundName: "Pop",
             Keys.breakSoundName: "Glass",
@@ -97,13 +124,27 @@ public final class AppSettings: ObservableObject {
             Keys.ambientGlowEnabled: true
         ])
 
+        if defaults.object(forKey: Keys.isBreakEnabled) != nil {
+            self.isBreakEnabled = defaults.bool(forKey: Keys.isBreakEnabled)
+        } else {
+            self.isBreakEnabled = true
+        }
+
+        if defaults.object(forKey: Keys.isBlinkEnabled) != nil {
+            self.isBlinkEnabled = defaults.bool(forKey: Keys.isBlinkEnabled)
+        } else {
+            self.isBlinkEnabled = true
+        }
+
         let savedBreakInterval = defaults.integer(forKey: Keys.breakIntervalMinutes)
         let savedBreakDuration = defaults.integer(forKey: Keys.breakDurationSeconds)
         let savedBlinkInterval = defaults.integer(forKey: Keys.blinkIntervalMinutes)
+        let savedBlinkDuration = defaults.integer(forKey: Keys.blinkDurationSeconds)
 
         self.breakIntervalMinutes = savedBreakInterval > 0 ? savedBreakInterval : 20
         self.breakDurationSeconds = savedBreakDuration > 0 ? savedBreakDuration : 20
         self.blinkIntervalMinutes = savedBlinkInterval > 0 ? savedBlinkInterval : 5
+        self.blinkDurationSeconds = savedBlinkDuration > 0 ? savedBlinkDuration : 5
         self.soundEnabled = defaults.bool(forKey: Keys.soundEnabled)
         self.blinkSoundName = defaults.string(forKey: Keys.blinkSoundName) ?? "Pop"
         self.breakSoundName = defaults.string(forKey: Keys.breakSoundName) ?? "Glass"

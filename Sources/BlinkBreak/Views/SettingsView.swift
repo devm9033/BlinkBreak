@@ -75,104 +75,119 @@ public struct SettingsView: View {
 
                     // Section 1: Break Reminder (Look Away)
                     VStack(alignment: .leading, spacing: 14) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "figure.walk")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.cyan)
-                            Text("Break Reminder (Look Away)")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
+                        HStack {
+                            HStack(spacing: 8) {
+                                Image(systemName: "figure.walk")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.cyan)
+                                Text("Break Reminder (Look Away)")
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primary)
+                            }
+
+                            Spacer()
+
+                            Toggle("", isOn: $settings.isBreakEnabled)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                                .onChange(of: settings.isBreakEnabled) { _ in
+                                    HapticManager.shared.buttonClick()
+                                }
                         }
 
-                        // Interval slider with haptics
-                        VStack(spacing: 8) {
+                        VStack(spacing: 14) {
+                            // Interval slider with haptics
+                            VStack(spacing: 8) {
+                                HStack {
+                                    Text("Interval:")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.secondary)
+                                        .frame(width: 75, alignment: .leading)
+
+                                    Slider(
+                                        value: Binding(
+                                            get: { Double(settings.breakIntervalMinutes) },
+                                            set: { newVal in
+                                                let intVal = Int(round(newVal))
+                                                if intVal != settings.breakIntervalMinutes {
+                                                    HapticManager.shared.sliderTick()
+                                                    settings.breakIntervalMinutes = intVal
+                                                }
+                                            }
+                                        ),
+                                        in: 5...60
+                                    )
+
+                                    Text("\(settings.breakIntervalMinutes) min")
+                                        .font(.system(size: 12.5, weight: .semibold, design: .rounded))
+                                        .monospacedDigit()
+                                        .foregroundColor(.primary)
+                                        .frame(width: 58, alignment: .trailing)
+                                }
+
+                                // Quick Presets
+                                HStack(spacing: 6) {
+                                    Text("Presets:")
+                                        .font(.system(size: 10.5))
+                                        .foregroundColor(.secondary.opacity(0.8))
+                                        .frame(width: 75, alignment: .leading)
+
+                                    ForEach(breakPresets, id: \.self) { preset in
+                                        Button {
+                                            if settings.breakIntervalMinutes != preset {
+                                                HapticManager.shared.buttonClick()
+                                                settings.breakIntervalMinutes = preset
+                                            }
+                                        } label: {
+                                            Text("\(preset)m")
+                                                .font(.system(size: 11, weight: settings.breakIntervalMinutes == preset ? .bold : .medium, design: .rounded))
+                                                .foregroundColor(settings.breakIntervalMinutes == preset ? (isLight ? .white : .primary) : .secondary)
+                                                .padding(.horizontal, 9)
+                                                .padding(.vertical, 3)
+                                                .background(
+                                                    Capsule()
+                                                        .fill(settings.breakIntervalMinutes == preset ? Color.cyan : Color.secondary.opacity(0.12))
+                                                )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+
+                                    Spacer()
+                                }
+                            }
+
+                            Divider().opacity(0.5)
+
+                            // Duration slider with haptics
                             HStack {
-                                Text("Interval:")
+                                Text("Duration:")
                                     .font(.system(size: 12))
                                     .foregroundColor(.secondary)
                                     .frame(width: 75, alignment: .leading)
 
                                 Slider(
                                     value: Binding(
-                                        get: { Double(settings.breakIntervalMinutes) },
+                                        get: { Double(settings.breakDurationSeconds) },
                                         set: { newVal in
-                                            let intVal = Int(round(newVal))
-                                            if intVal != settings.breakIntervalMinutes {
+                                            let intVal = Int(round(newVal / 5.0) * 5.0)
+                                            if intVal != settings.breakDurationSeconds {
                                                 HapticManager.shared.sliderTick()
-                                                settings.breakIntervalMinutes = intVal
+                                                settings.breakDurationSeconds = intVal
                                             }
                                         }
                                     ),
-                                    in: 5...60
+                                    in: 10...60
                                 )
 
-                                Text("\(settings.breakIntervalMinutes) min")
+                                Text("\(settings.breakDurationSeconds) sec")
                                     .font(.system(size: 12.5, weight: .semibold, design: .rounded))
                                     .monospacedDigit()
                                     .foregroundColor(.primary)
                                     .frame(width: 58, alignment: .trailing)
                             }
-
-                            // Quick Presets
-                            HStack(spacing: 6) {
-                                Text("Presets:")
-                                    .font(.system(size: 10.5))
-                                    .foregroundColor(.secondary.opacity(0.8))
-                                    .frame(width: 75, alignment: .leading)
-
-                                ForEach(breakPresets, id: \.self) { preset in
-                                    Button {
-                                        if settings.breakIntervalMinutes != preset {
-                                            HapticManager.shared.buttonClick()
-                                            settings.breakIntervalMinutes = preset
-                                        }
-                                    } label: {
-                                        Text("\(preset)m")
-                                            .font(.system(size: 11, weight: settings.breakIntervalMinutes == preset ? .bold : .medium, design: .rounded))
-                                            .foregroundColor(settings.breakIntervalMinutes == preset ? (isLight ? .white : .primary) : .secondary)
-                                            .padding(.horizontal, 9)
-                                            .padding(.vertical, 3)
-                                            .background(
-                                                Capsule()
-                                                    .fill(settings.breakIntervalMinutes == preset ? Color.cyan : Color.secondary.opacity(0.12))
-                                            )
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-
-                                Spacer()
-                            }
                         }
-
-                        Divider().opacity(0.5)
-
-                        // Duration slider with haptics
-                        HStack {
-                            Text("Duration:")
-                                .font(.system(size: 12))
-                                .foregroundColor(.secondary)
-                                .frame(width: 75, alignment: .leading)
-
-                            Slider(
-                                value: Binding(
-                                    get: { Double(settings.breakDurationSeconds) },
-                                    set: { newVal in
-                                        let intVal = Int(round(newVal / 5.0) * 5.0)
-                                        if intVal != settings.breakDurationSeconds {
-                                            HapticManager.shared.sliderTick()
-                                            settings.breakDurationSeconds = intVal
-                                        }
-                                    }
-                                ),
-                                in: 10...60
-                            )
-
-                            Text("\(settings.breakDurationSeconds) sec")
-                                .font(.system(size: 12.5, weight: .semibold, design: .rounded))
-                                .monospacedDigit()
-                                .foregroundColor(.primary)
-                                .frame(width: 58, alignment: .trailing)
-                        }
+                        .opacity(settings.isBreakEnabled ? 1.0 : 0.4)
+                        .disabled(!settings.isBreakEnabled)
                     }
                     .padding(16)
                     .background(
@@ -196,64 +211,109 @@ public struct SettingsView: View {
 
                     // Section 2: Blink Reminder (Notch Micro-Capsule)
                     VStack(alignment: .leading, spacing: 14) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "eye")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.cyan)
-                            Text("Blink Reminder (Notch Capsule)")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
-                        }
-
                         HStack {
-                            Text("Interval:")
-                                .font(.system(size: 12))
-                                .foregroundColor(.secondary)
-                                .frame(width: 75, alignment: .leading)
-
-                            Slider(
-                                value: Binding(
-                                    get: { Double(settings.blinkIntervalMinutes) },
-                                    set: { newVal in
-                                        let intVal = Int(round(newVal))
-                                        if intVal != settings.blinkIntervalMinutes {
-                                            HapticManager.shared.sliderTick()
-                                            settings.blinkIntervalMinutes = intVal
-                                        }
-                                    }
-                                ),
-                                in: 1...20
-                            )
-
-                            Text("\(settings.blinkIntervalMinutes) min")
-                                .font(.system(size: 12.5, weight: .semibold, design: .rounded))
-                                .monospacedDigit()
-                                .foregroundColor(.primary)
-                                .frame(width: 58, alignment: .trailing)
-                        }
-
-                        Divider().opacity(0.5)
-
-                        // Ambient Aurora Glow toggle
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Internal Aurora Fluid Wave")
-                                    .font(.system(size: 12, weight: .medium))
+                            HStack(spacing: 8) {
+                                Image(systemName: "eye")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.cyan)
+                                Text("Blink Reminder (Notch Capsule)")
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
                                     .foregroundColor(.primary)
-                                Text("Multi-color silk wave shifting organically inside the liquid glass pill")
-                                    .font(.system(size: 10.5))
-                                    .foregroundColor(.secondary)
                             }
 
                             Spacer()
 
-                            Toggle("", isOn: $settings.ambientGlowEnabled)
+                            Toggle("", isOn: $settings.isBlinkEnabled)
                                 .toggleStyle(.switch)
                                 .labelsHidden()
-                                .onChange(of: settings.ambientGlowEnabled) { _ in
+                                .onChange(of: settings.isBlinkEnabled) { _ in
                                     HapticManager.shared.buttonClick()
                                 }
                         }
+
+                        VStack(spacing: 14) {
+                            HStack {
+                                Text("Interval:")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 75, alignment: .leading)
+
+                                Slider(
+                                    value: Binding(
+                                        get: { Double(settings.blinkIntervalMinutes) },
+                                        set: { newVal in
+                                            let intVal = Int(round(newVal))
+                                            if intVal != settings.blinkIntervalMinutes {
+                                                HapticManager.shared.sliderTick()
+                                                settings.blinkIntervalMinutes = intVal
+                                            }
+                                        }
+                                    ),
+                                    in: 1...20
+                                )
+
+                                Text("\(settings.blinkIntervalMinutes) min")
+                                    .font(.system(size: 12.5, weight: .semibold, design: .rounded))
+                                    .monospacedDigit()
+                                    .foregroundColor(.primary)
+                                    .frame(width: 58, alignment: .trailing)
+                            }
+
+                            Divider().opacity(0.5)
+
+                            // Duration slider with haptics
+                            HStack {
+                                Text("Duration:")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 75, alignment: .leading)
+
+                                Slider(
+                                    value: Binding(
+                                        get: { Double(settings.blinkDurationSeconds) },
+                                        set: { newVal in
+                                            let intVal = Int(round(newVal))
+                                            if intVal != settings.blinkDurationSeconds {
+                                                HapticManager.shared.sliderTick()
+                                                settings.blinkDurationSeconds = intVal
+                                            }
+                                        }
+                                    ),
+                                    in: 3...15
+                                )
+
+                                Text("\(settings.blinkDurationSeconds) sec")
+                                    .font(.system(size: 12.5, weight: .semibold, design: .rounded))
+                                    .monospacedDigit()
+                                    .foregroundColor(.primary)
+                                    .frame(width: 58, alignment: .trailing)
+                            }
+
+                            Divider().opacity(0.5)
+
+                            // Ambient Aurora Glow toggle
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Internal Aurora Fluid Wave")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.primary)
+                                    Text("Multi-color silk wave shifting organically inside the liquid glass pill")
+                                        .font(.system(size: 10.5))
+                                        .foregroundColor(.secondary)
+                                }
+
+                                Spacer()
+
+                                Toggle("", isOn: $settings.ambientGlowEnabled)
+                                    .toggleStyle(.switch)
+                                    .labelsHidden()
+                                    .onChange(of: settings.ambientGlowEnabled) { _ in
+                                        HapticManager.shared.buttonClick()
+                                    }
+                            }
+                        }
+                        .opacity(settings.isBlinkEnabled ? 1.0 : 0.4)
+                        .disabled(!settings.isBlinkEnabled)
                     }
                     .padding(16)
                     .background(

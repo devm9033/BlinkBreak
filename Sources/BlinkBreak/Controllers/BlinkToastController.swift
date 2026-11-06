@@ -84,7 +84,8 @@ public final class BlinkToastController {
             panel.animator().alphaValue = 1.0
         }
 
-        BlinkToastState.shared.start(duration: 5.0) { [weak self] in
+        let duration = Double(AppSettings.shared.blinkDurationSeconds)
+        BlinkToastState.shared.start(duration: duration > 0 ? duration : 5.0) { [weak self] in
             self?.hide()
         }
     }

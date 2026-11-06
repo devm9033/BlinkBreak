@@ -41,12 +41,12 @@ public final class BreakManager: ObservableObject {
 
     private func handleSettingsChanged() {
         let maxBreakSec = settings.breakIntervalMinutes * 60
-        if timeUntilBreak > maxBreakSec {
+        if timeUntilBreak > maxBreakSec || !settings.isBreakEnabled {
             timeUntilBreak = maxBreakSec
         }
 
         let maxBlinkSec = settings.blinkIntervalMinutes * 60
-        if timeUntilBlink > maxBlinkSec {
+        if timeUntilBlink > maxBlinkSec || !settings.isBlinkEnabled {
             timeUntilBlink = maxBlinkSec
         }
     }
@@ -95,16 +95,16 @@ public final class BreakManager: ObservableObject {
                 completeBreak()
             }
         } else {
-            // Only decrement break timer if not paused due to video playback
-            if !isBreakPausedDueToVideo {
+            // Only decrement break timer if enabled and not paused due to video playback
+            if settings.isBreakEnabled && !isBreakPausedDueToVideo {
                 timeUntilBreak -= 1
                 if timeUntilBreak <= 0 {
                     startBreak()
                 }
             }
 
-            // Only decrement blink timer if not paused due to video playback
-            if !isBlinkPausedDueToVideo {
+            // Only decrement blink timer if enabled and not paused due to video playback
+            if settings.isBlinkEnabled && !isBlinkPausedDueToVideo {
                 timeUntilBlink -= 1
                 if timeUntilBlink <= 0 {
                     triggerBlink()

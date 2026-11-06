@@ -19,9 +19,12 @@ struct BlinkBreakTests {
     @Test("App Settings default values")
     func appSettingsDefaults() {
         let settings = AppSettings.shared
+        #expect(settings.isBreakEnabled == true)
+        #expect(settings.isBlinkEnabled == true)
         #expect(settings.breakIntervalMinutes > 0)
         #expect(settings.breakDurationSeconds > 0)
         #expect(settings.blinkIntervalMinutes > 0)
+        #expect(settings.blinkDurationSeconds > 0)
         #expect(settings.pauseBreaksDuringVideo == true)
         #expect(settings.pauseBlinksDuringVideo == false)
         #expect(settings.ambientGlowEnabled == true)
@@ -249,6 +252,54 @@ struct BlinkBreakTests {
         // Timers must remain frozen when display is off
         #expect(manager.timeUntilBreak == initialBreakTime)
         #expect(manager.timeUntilBlink == initialBlinkTime)
+    }
+
+    @Test("Individual toggle disables break reminder countdown")
+    func individualToggleDisablesBreakReminder() {
+        let manager = BreakManager.shared
+        let settings = AppSettings.shared
+        settings.resume()
+        settings.isBreakEnabled = false
+        settings.isBlinkEnabled = true
+        manager.resetTimers()
+
+        let initialBreakTime = manager.timeUntilBreak
+        let initialBlinkTime = manager.timeUntilBlink
+
+        manager.detector = MockVideoDetector(isVideoPlaying: false, isDisplayOn: true, playingProcessName: nil)
+        manager.tick()
+
+        // Break timer must NOT decrement when disabled
+        #expect(manager.timeUntilBreak == initialBreakTime)
+        // Blink timer must decrement normally
+        #expect(manager.timeUntilBlink == initialBlinkTime - 1)
+
+        // Restore setting
+        settings.isBreakEnabled = true
+    }
+
+    @Test("Individual toggle disables blink reminder countdown")
+    func individualToggleDisablesBlinkReminder() {
+        let manager = BreakManager.shared
+        let settings = AppSettings.shared
+        settings.resume()
+        settings.isBreakEnabled = true
+        settings.isBlinkEnabled = false
+        manager.resetTimers()
+
+        let initialBreakTime = manager.timeUntilBreak
+        let initialBlinkTime = manager.timeUntilBlink
+
+        manager.detector = MockVideoDetector(isVideoPlaying: false, isDisplayOn: true, playingProcessName: nil)
+        manager.tick()
+
+        // Break timer must decrement normally
+        #expect(manager.timeUntilBreak == initialBreakTime - 1)
+        // Blink timer must NOT decrement when disabled
+        #expect(manager.timeUntilBlink == initialBlinkTime)
+
+        // Restore setting
+        settings.isBlinkEnabled = true
     }
 
     @Test("Live VideoPlaybackDetector runs without errors")
